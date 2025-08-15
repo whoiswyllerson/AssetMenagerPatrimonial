@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { Asset, AssetCategory, AssetStatus } from '../../types';
-import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon } from '../shared/Icons';
+import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon } from '../shared/Icons';
 
 interface AddAssetViewProps {
   onAddAsset: (asset: Omit<Asset, 'id'>) => void;
@@ -41,6 +41,7 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
   const [category, setCategory] = useState<AssetCategory | null>(null);
   const [formData, setFormData] = useState<Partial<Omit<Asset, 'id'>>>({});
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -54,6 +55,24 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
         reader.readAsDataURL(file);
     }
   };
+
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        setDocumentFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            setFormData(prev => ({
+                ...prev,
+                documentUrl: result,
+                documentName: file.name
+            }));
+        };
+        reader.readAsDataURL(file);
+    }
+  };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -83,6 +102,7 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
       category,
       photoUrl: formData.photoUrl || defaultPhotoUrl,
       history: [{ date: new Date().toISOString().split('T')[0], user: 'Admin', action: 'Ativo criado' }],
+      allocationHistory: [],
       acquisition: {
         value: Number(formData.acquisition?.value) || 0,
         ...formData.acquisition,
@@ -93,11 +113,12 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
     setCategory(null);
     setFormData({});
     setPhotoPreview(null);
+    setDocumentFile(null);
   };
 
   const getCategorySpecificDefaults = (cat: AssetCategory) => {
     switch (cat) {
-      case 'Furniture': return { maintenanceSchedule: [], allocationHistory: [] };
+      case 'Furniture': return { maintenanceSchedule: [] };
       case 'IT': return { specs: {}, installedSoftware: [], repairHistory: [] };
       case 'Vehicle': return { vehicleData: {}, documentation: {}, preventiveMaintenance: [], fuelLogs: [] };
       default: return {};
@@ -146,6 +167,27 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
               <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
               <p className="text-xs text-text-secondary mt-2">Use uma imagem nítida para identificar o ativo facilmente.<br/>Formatos suportados: PNG, JPG.</p>
             </div>
+          </div>
+        </div>
+        
+        {/* Document Upload Section */}
+        <div className="p-6 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 border-b pb-2">Documento do Ativo (Opcional)</h3>
+          <div className="flex items-center gap-6">
+            <div className="flex-1">
+              <label htmlFor="document-upload" className="cursor-pointer px-5 py-2.5 rounded-lg bg-gray-600 text-white text-sm font-medium hover:bg-gray-700 transition-colors inline-flex items-center">
+                <UploadIcon className="w-5 h-5 mr-2" />
+                Carregar Documento
+              </label>
+              <input id="document-upload" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleDocumentChange} className="hidden" />
+              <p className="text-xs text-text-secondary mt-2">Anexe a nota fiscal, manual ou outro documento relevante.<br/>Formatos suportados: PDF, DOCX, XLSX.</p>
+            </div>
+            {documentFile && (
+              <div className="flex items-center p-2 rounded-lg bg-gray-100 border max-w-xs">
+                <DocumentIcon className="w-8 h-8 text-gray-500 mr-2 flex-shrink-0" />
+                <span className="text-sm text-text-primary truncate" title={documentFile.name}>{documentFile.name}</span>
+              </div>
+            )}
           </div>
         </div>
 

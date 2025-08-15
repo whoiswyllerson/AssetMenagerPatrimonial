@@ -19,6 +19,7 @@ export const initialAssets: Asset[] = [
     history: [{ date: '2023-05-21', user: 'Admin', action: 'Ativo criado' }],
     lastAuditedDate: '2024-07-01',
     identifiers: { qrCode: 'IT-001' },
+    allocationHistory: [{ user: 'Ana Silva', startDate: '2023-05-21', endDate: null }],
   },
   {
     id: 'IT-002',
@@ -37,6 +38,7 @@ export const initialAssets: Asset[] = [
       { date: '2024-07-28', user: 'Carlos Pereira', action: 'Status alterado para Em Manutenção' }
     ],
     identifiers: { qrCode: 'IT-002' },
+    allocationHistory: [],
   },
   {
     id: 'FUR-001',
@@ -86,6 +88,7 @@ export const initialAssets: Asset[] = [
     ],
     history: [{ date: '2023-08-01', user: 'Admin', action: 'Ativo criado' }],
     identifiers: { qrCode: 'VEH-001' },
+    allocationHistory: [{ user: 'Roberto Lima', startDate: '2023-08-01', endDate: null }],
   },
   {
     id: 'IT-003',
@@ -101,6 +104,7 @@ export const initialAssets: Asset[] = [
     repairHistory: [],
     history: [{ date: '2024-01-10', user: 'Admin', action: 'Ativo criado' }],
     identifiers: { qrCode: 'IT-003' },
+    allocationHistory: [{ user: 'Julia Costa', startDate: '2024-01-10', endDate: null }],
   },
    {
     id: 'FUR-003',

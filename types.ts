@@ -59,12 +59,14 @@ interface BaseAsset {
   }[];
   lastAuditedDate?: string;
   photoUrl?: string;
+  documentUrl?: string;
+  documentName?: string;
+  allocationHistory: { user: string; startDate: string; endDate: string | null }[];
 }
 
 export interface FurnitureAsset extends BaseAsset {
   category: 'Furniture';
   maintenanceSchedule: Maintenance[];
-  allocationHistory: { user: string; startDate: string; endDate: string | null }[];
 }
 
 export interface ITAsset extends BaseAsset {

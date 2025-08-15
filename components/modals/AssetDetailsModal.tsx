@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus } from '../../types';
 import { Card } from '../shared/Card';
+import { CheckInIcon, CheckOutIcon, DocumentIcon } from '../shared/Icons';
+import { CheckoutModal } from './CheckoutModal';
 
 interface AssetDetailsModalProps {
   asset: Asset;
@@ -26,11 +28,23 @@ const DetailItem: React.FC<{ label: string, value: React.ReactNode }> = ({ label
 
 export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onClose, onUpdate, onDelete }) => {
     const [currentStatus, setCurrentStatus] = useState<AssetStatus>(asset.status);
+    const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const newStatus = e.target.value as AssetStatus;
       setCurrentStatus(newStatus);
-      const updatedAsset = { ...asset, status: newStatus };
+      const updatedAsset = { 
+        ...asset, 
+        status: newStatus,
+        history: [
+            ...asset.history,
+            {
+                date: new Date().toISOString().split('T')[0],
+                user: 'Admin',
+                action: `Status alterado para ${newStatus}`
+            }
+        ]
+     };
       onUpdate(updatedAsset);
     };
 
@@ -41,13 +55,60 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
         }
     };
 
+    const handleCheckIn = () => {
+        if (window.confirm(`Confirmar o check-in (devolução) de "${asset.name}"?`)) {
+            const today = new Date().toISOString().split('T')[0];
+
+            // Find the last open allocation and close it
+            const lastAllocation = [...asset.allocationHistory].reverse().find(a => a.endDate === null);
+            const newAllocationHistory = asset.allocationHistory.map(a => 
+                (a === lastAllocation) ? { ...a, endDate: today } : a
+            );
+
+            const updatedAsset: Asset = {
+                ...asset,
+                status: 'Em Estoque',
+                location: {
+                    ...asset.location,
+                    responsible: 'N/A',
+                },
+                history: [
+                    ...asset.history,
+                    { date: today, user: 'Admin', action: `Check-in realizado por ${asset.location.responsible}` }
+                ],
+                allocationHistory: newAllocationHistory,
+            };
+            onUpdate(updatedAsset);
+            onClose();
+        }
+    };
+
+    const handleConfirmCheckout = (responsible: string, location: string) => {
+        const today = new Date().toISOString().split('T')[0];
+        const updatedAsset: Asset = {
+            ...asset,
+            status: 'Ativo',
+            location: {
+                physicalLocation: location,
+                responsible: responsible,
+            },
+            history: [
+                ...asset.history,
+                { date: today, user: 'Admin', action: `Check-out realizado para ${responsible}` }
+            ],
+            allocationHistory: [
+                ...asset.allocationHistory,
+                { user: responsible, startDate: today, endDate: null }
+            ]
+        };
+        onUpdate(updatedAsset);
+        setIsCheckoutModalOpen(false);
+        onClose();
+    };
+
     const renderFurnitureDetails = (asset: FurnitureAsset) => (
       <>
-        {asset.allocationHistory.length > 0 && <DetailSection title="Histórico de Alocação">
-            {asset.allocationHistory.map((alloc, i) => (
-                <p key={i} className="text-sm">{alloc.user} (de {alloc.startDate} a {alloc.endDate || 'presente'})</p>
-            ))}
-        </DetailSection>}
+        {/* Allocation history is now rendered for all assets */}
       </>
     );
 
@@ -83,8 +144,17 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
     );
     
     return (
+        <>
+        {isCheckoutModalOpen && (
+            <CheckoutModal 
+                assetName={asset.name}
+                currentLocation={asset.location.physicalLocation}
+                onClose={() => setIsCheckoutModalOpen(false)}
+                onConfirm={handleConfirmCheckout}
+            />
+        )}
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-brand-light rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="bg-brand-light rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-brand-secondary">{asset.name}</h2>
@@ -118,6 +188,34 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                 <DetailItem label="Fornecedor" value={asset.acquisition.supplier} />
                                 <DetailItem label="Nota Fiscal" value={asset.acquisition.invoice} />
                             </DetailSection>
+
+                            {asset.documentUrl && asset.documentName && (
+                                <DetailSection title="Documento Anexado">
+                                    <div className="flex items-center p-2 rounded-lg bg-gray-100 border">
+                                        <DocumentIcon className="w-8 h-8 text-gray-500 mr-3 flex-shrink-0" />
+                                        <a 
+                                            href={asset.documentUrl} 
+                                            download={asset.documentName} 
+                                            className="text-brand-primary hover:underline font-medium break-all"
+                                            title={`Baixar ${asset.documentName}`}
+                                        >
+                                            {asset.documentName}
+                                        </a>
+                                    </div>
+                                </DetailSection>
+                            )}
+
+                            {asset.allocationHistory && asset.allocationHistory.length > 0 && 
+                                <DetailSection title="Histórico de Alocação">
+                                    <div className="max-h-24 overflow-y-auto pr-2">
+                                    {[...asset.allocationHistory].reverse().map((alloc, i) => (
+                                        <p key={i} className="text-sm py-1 border-b last:border-0">
+                                            <span className="font-semibold">{alloc.user}</span> (de {new Date(alloc.startDate + 'T00:00:00').toLocaleDateString()} a {alloc.endDate ? new Date(alloc.endDate + 'T00:00:00').toLocaleDateString() : 'presente'})
+                                        </p>
+                                    ))}
+                                    </div>
+                                </DetailSection>
+                            }
                         </div>
                         <div>
                             {asset.photoUrl && (
@@ -135,20 +233,43 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                 </div>
 
                  <div className="p-4 bg-white mt-auto border-t flex justify-between items-center">
-                    <button 
-                        onClick={handleDelete}
-                        className="px-5 py-2 rounded-lg bg-status-red text-white hover:bg-red-700 transition-colors"
-                    >
-                        Excluir Ativo
-                    </button>
-                    <button 
-                        onClick={onClose} 
-                        className="px-5 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors"
-                    >
-                        Fechar
-                    </button>
+                    <div className="flex items-center space-x-3">
+                         {asset.status === 'Em Estoque' && (
+                            <button 
+                                onClick={() => setIsCheckoutModalOpen(true)}
+                                className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-colors font-medium text-sm"
+                            >
+                                <CheckOutIcon className="w-5 h-5 mr-2" />
+                                Check-out
+                            </button>
+                        )}
+                        {asset.status === 'Ativo' && (
+                            <button 
+                                onClick={handleCheckIn}
+                                className="flex items-center px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors font-medium text-sm"
+                            >
+                                <CheckInIcon className="w-5 h-5 mr-2" />
+                                Check-in
+                            </button>
+                        )}
+                    </div>
+                    <div className="flex items-center space-x-3">
+                        <button 
+                            onClick={handleDelete}
+                            className="px-4 py-2 rounded-lg bg-status-red text-white hover:bg-red-700 transition-colors text-sm font-medium"
+                        >
+                            Excluir Ativo
+                        </button>
+                        <button 
+                            onClick={onClose} 
+                            className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors text-sm font-medium"
+                        >
+                            Fechar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+        </>
     );
 };
