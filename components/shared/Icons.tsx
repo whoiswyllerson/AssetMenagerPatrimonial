@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface IconProps {
@@ -6,19 +5,35 @@ interface IconProps {
 }
 
 export const DashboardIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18M4 4h16v4H4zM4 18h16"></path></svg>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
 );
 
 export const FurnitureIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 9H4v8h16V9zM8 4h8v5H8V4zM7 17h10v3H7v-3z"></path></svg>
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <path d="M21 9V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"/>
+        <path d="M21 11.5v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5"/>
+        <path d="M3.3 11.5a2 2 0 0 1 1.6-2h14.2a2 2 0 0 1 1.6 2"/>
+        <path d="M5 18v2"/>
+        <path d="M19 18v2"/>
+    </svg>
 );
 
 export const ITIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="6" height="18" rx="1"></rect>
+        <line x1="6" y1="7" x2="6" y2="7.01"></line>
+        <path d="M12 13h10a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H12a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1z"></path>
+        <path d="M17 13v4"></path>
+        <path d="M14 21h6"></path>
+    </svg>
 );
 
 export const VehicleIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21h-2a2 2 0 01-2-2v-2H9v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-6l4-4h10l4 4v6a2 2 0 01-2 2zM7 15h10M7 12h.01M17 12h.01"></path></svg>
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="7" cy="17" r="2" />
+    <circle cx="17" cy="17" r="2" />
+    <path d="M5 17H3V11l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6" />
+  </svg>
 );
 
 export const AddAssetIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
