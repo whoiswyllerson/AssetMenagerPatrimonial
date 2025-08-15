@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Asset, AssetStatus, User } from '../../types';
@@ -89,32 +90,21 @@ const DraggableRow: React.FC<{
 
 export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset, currentUser }) => {
   const [currentAssets, setCurrentAssets] = useState(assets);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   
   React.useEffect(() => {
     setCurrentAssets(assets);
   }, [assets]);
-
-  React.useEffect(() => {
-    // If an asset is selected in the modal, this ensures its data is kept in sync 
-    // with the main asset list from props, reflecting any updates immediately.
-    if (selectedAsset) {
-        const updatedAsset = assets.find(a => a.id === selectedAsset.id);
-        if (updatedAsset) {
-            setSelectedAsset(updatedAsset);
-        } else {
-            // Asset was deleted or filtered out, so close the modal
-            setSelectedAsset(null);
-        }
-    }
-  }, [assets]);
-
 
   const { totalCount, totalValue } = useMemo(() => {
     const count = assets.length;
     const value = assets.reduce((sum, asset) => sum + asset.acquisition.value, 0);
     return { totalCount: count, totalValue: value };
   }, [assets]);
+
+  const selectedAsset = useMemo(() => {
+    return selectedAssetId ? assets.find(a => a.id === selectedAssetId) : null;
+  }, [assets, selectedAssetId]);
 
   const moveRow = (dragIndex: number, hoverIndex: number) => {
     const dragRow = currentAssets[dragIndex];
@@ -172,7 +162,7 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
                   asset={asset} 
                   index={index} 
                   moveRow={moveRow} 
-                  onViewDetails={setSelectedAsset} 
+                  onViewDetails={() => setSelectedAssetId(asset.id)} 
                   getStatusColor={getStatusColor}
                 />
               ))}
@@ -184,7 +174,7 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
       {selectedAsset && (
         <AssetDetailsModal 
           asset={selectedAsset} 
-          onClose={() => setSelectedAsset(null)}
+          onClose={() => setSelectedAssetId(null)}
           onUpdate={onUpdateAsset}
           onDelete={onDeleteAsset}
           currentUser={currentUser}
