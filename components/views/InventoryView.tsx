@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import type { Asset } from '../../types';
 import { Card } from '../shared/Card';
-import { CheckCircleIcon } from '../shared/Icons';
+import { CheckCircleIcon, QrCodeIcon } from '../shared/Icons';
+import { QRScannerModal } from '../modals/QRScannerModal';
 
 interface InventoryViewProps {
   assets: Asset[];
@@ -11,6 +11,7 @@ interface InventoryViewProps {
 
 export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAsset }) => {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const locations = useMemo(() => {
     const allLocations = assets.map(asset => asset.location.physicalLocation);
@@ -24,30 +25,64 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
     return assets.filter(asset => asset.location.physicalLocation === selectedLocation);
   }, [assets, selectedLocation]);
 
+  const handleScanSuccess = (decodedText: string) => {
+    setIsScannerOpen(false);
+    const assetToAudit = assets.find(
+      asset => asset.id === decodedText ||
+               asset.serialNumber === decodedText ||
+               asset.identifiers?.barcode === decodedText ||
+               asset.identifiers?.qrCode === decodedText
+    );
+
+    if (assetToAudit) {
+      onAuditAsset(assetToAudit.id);
+      alert(`Ativo "${assetToAudit.name}" auditado com sucesso!`);
+    } else {
+      alert(`Ativo com código "${decodedText}" não encontrado.`);
+    }
+  };
+
   const today = new Date().toISOString().split('T')[0];
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-brand-secondary">Inventário e Auditoria</h1>
+      
+      {isScannerOpen && (
+        <QRScannerModal 
+            onClose={() => setIsScannerOpen(false)}
+            onScanSuccess={handleScanSuccess}
+        />
+      )}
+
       <Card>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
-          <div>
-            <label htmlFor="location-filter" className="text-sm font-medium text-text-secondary mr-2">Filtrar por Localização:</label>
-            <select
-              id="location-filter"
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className="p-2 border border-gray-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all"
-            >
-              <option value="all">Todas as Localizações</option>
-              {locations.filter(l => l !== 'all').map(loc => (
-                <option key={loc} value={loc}>{loc}</option>
-              ))}
-            </select>
-          </div>
-          <p className="text-sm text-text-secondary font-medium">
-            Exibindo {filteredAssets.length} de {assets.length} ativos.
-          </p>
+            <div className="flex items-center space-x-4">
+                <div>
+                    <label htmlFor="location-filter" className="text-sm font-medium text-text-secondary mr-2">Filtrar por Localização:</label>
+                    <select
+                      id="location-filter"
+                      value={selectedLocation}
+                      onChange={(e) => setSelectedLocation(e.target.value)}
+                      className="p-2 border border-gray-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all"
+                    >
+                      <option value="all">Todas as Localizações</option>
+                      {locations.filter(l => l !== 'all').map(loc => (
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                    </select>
+                </div>
+                <button 
+                    onClick={() => setIsScannerOpen(true)}
+                    className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-colors"
+                >
+                    <QrCodeIcon className="w-5 h-5 mr-2"/>
+                    Escanear Código do Ativo
+                </button>
+            </div>
+            <p className="text-sm text-text-secondary font-medium">
+                Exibindo {filteredAssets.length} de {assets.length} ativos.
+            </p>
         </div>
         
         <div className="overflow-x-auto">

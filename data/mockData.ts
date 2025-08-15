@@ -1,4 +1,3 @@
-
 import type { Asset } from '../types';
 
 export const initialAssets: Asset[] = [
@@ -19,6 +18,7 @@ export const initialAssets: Asset[] = [
     repairHistory: [],
     history: [{ date: '2023-05-21', user: 'Admin', action: 'Ativo criado' }],
     lastAuditedDate: '2024-07-01',
+    identifiers: { qrCode: 'IT-001' },
   },
   {
     id: 'IT-002',
@@ -36,6 +36,7 @@ export const initialAssets: Asset[] = [
       { date: '2022-11-11', user: 'Admin', action: 'Ativo criado' },
       { date: '2024-07-28', user: 'Carlos Pereira', action: 'Status alterado para Em Manutenção' }
     ],
+    identifiers: { qrCode: 'IT-002' },
   },
   {
     id: 'FUR-001',
@@ -51,6 +52,7 @@ export const initialAssets: Asset[] = [
     allocationHistory: [{ user: 'Ana Silva', startDate: '2023-05-21', endDate: null }],
     history: [{ date: '2023-05-21', user: 'Admin', action: 'Ativo criado' }],
     lastAuditedDate: '2024-06-15',
+    identifiers: { qrCode: 'FUR-001' },
   },
   {
     id: 'FUR-002',
@@ -83,6 +85,7 @@ export const initialAssets: Asset[] = [
       { id: 'FUEL-02', date: '2024-07-25', cost: 260, liters: 43.5, station: 'Posto Ipiranga', odometer: 10400 },
     ],
     history: [{ date: '2023-08-01', user: 'Admin', action: 'Ativo criado' }],
+    identifiers: { qrCode: 'VEH-001' },
   },
   {
     id: 'IT-003',
@@ -97,6 +100,7 @@ export const initialAssets: Asset[] = [
     installedSoftware: [],
     repairHistory: [],
     history: [{ date: '2024-01-10', user: 'Admin', action: 'Ativo criado' }],
+    identifiers: { qrCode: 'IT-003' },
   },
    {
     id: 'FUR-003',
