@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface IconProps {
@@ -38,6 +39,19 @@ export const VehicleIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
 
 export const AddAssetIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+);
+
+export const InventoryIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h7.5M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3.75A1.5 1.5 0 0 1 4.5 2.25h15A1.5 1.5 0 0 1 21 3.75v16.5A1.5 1.5 0 0 1 19.5 21.75h-15A1.5 1.5 0 0 1 3 20.25V3.75Z" />
+    </svg>
+);
+
+export const PhotoIcon: React.FC<IconProps> = ({ className = "w-10 h-10" }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+    </svg>
 );
 
 export const ChevronDownIcon: React.FC<IconProps> = ({ className = "w-5 h-5" }) => (

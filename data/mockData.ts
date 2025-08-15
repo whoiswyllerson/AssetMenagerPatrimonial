@@ -18,6 +18,7 @@ export const initialAssets: Asset[] = [
     ],
     repairHistory: [],
     history: [{ date: '2023-05-21', user: 'Admin', action: 'Ativo criado' }],
+    lastAuditedDate: '2024-07-01',
   },
   {
     id: 'IT-002',
@@ -49,6 +50,7 @@ export const initialAssets: Asset[] = [
     maintenanceSchedule: [],
     allocationHistory: [{ user: 'Ana Silva', startDate: '2023-05-21', endDate: null }],
     history: [{ date: '2023-05-21', user: 'Admin', action: 'Ativo criado' }],
+    lastAuditedDate: '2024-06-15',
   },
   {
     id: 'FUR-002',

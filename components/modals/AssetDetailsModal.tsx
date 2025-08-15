@@ -43,11 +43,6 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
 
     const renderFurnitureDetails = (asset: FurnitureAsset) => (
       <>
-        <DetailSection title="Detalhes do Mobiliário">
-            <div className="flex justify-center">
-              <img src={asset.photoUrl} alt={asset.name} className="rounded-lg max-h-48" />
-            </div>
-        </DetailSection>
         {asset.allocationHistory.length > 0 && <DetailSection title="Histórico de Alocação">
             {asset.allocationHistory.map((alloc, i) => (
                 <p key={i} className="text-sm">{alloc.user} (de {alloc.startDate} a {alloc.endDate || 'presente'})</p>
@@ -125,6 +120,13 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                             </DetailSection>
                         </div>
                         <div>
+                            {asset.photoUrl && (
+                                <DetailSection title="Foto do Ativo">
+                                    <div className="flex justify-center my-2">
+                                        <img src={asset.photoUrl} alt={asset.name} className="rounded-lg max-h-48 shadow-md object-contain" />
+                                    </div>
+                                </DetailSection>
+                            )}
                             {asset.category === 'Furniture' && renderFurnitureDetails(asset as FurnitureAsset)}
                             {asset.category === 'IT' && renderITDetails(asset as ITAsset)}
                             {asset.category === 'Vehicle' && renderVehicleDetails(asset as VehicleAsset)}

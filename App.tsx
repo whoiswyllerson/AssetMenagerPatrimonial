@@ -9,8 +9,9 @@ import { AssetListView } from './components/views/AssetListView';
 import { AddAssetView } from './components/views/AddAssetView';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { InventoryView } from './components/views/InventoryView';
 
-export type View = 'DASHBOARD' | 'FURNITURE' | 'IT' | 'VEHICLES' | 'ADD_ASSET';
+export type View = 'DASHBOARD' | 'FURNITURE' | 'IT' | 'VEHICLES' | 'ADD_ASSET' | 'INVENTORY';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('DASHBOARD');
@@ -37,6 +38,26 @@ const App: React.FC = () => {
 
   const deleteAsset = (assetId: string) => {
     setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
+  };
+
+  const auditAsset = (assetId: string) => {
+    setAssets(prevAssets => prevAssets.map(asset => {
+      if (asset.id === assetId) {
+        return {
+          ...asset,
+          lastAuditedDate: new Date().toISOString().split('T')[0],
+          history: [
+            ...asset.history,
+            {
+              date: new Date().toISOString().split('T')[0],
+              user: 'Admin',
+              action: 'Ativo auditado no inventário'
+            }
+          ]
+        };
+      }
+      return asset;
+    }));
   };
   
   const filteredAssets = useMemo(() => {
@@ -81,6 +102,8 @@ const App: React.FC = () => {
         return <AssetListView assets={getAssetsByCategory('Vehicle')} category='Frota de Veículos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} />;
       case 'ADD_ASSET':
         return <AddAssetView onAddAsset={addAsset} />;
+      case 'INVENTORY':
+        return <InventoryView assets={filteredAssets} onAuditAsset={auditAsset} />;
       default:
         return <DashboardView assets={filteredAssets} alerts={alerts} />;
     }

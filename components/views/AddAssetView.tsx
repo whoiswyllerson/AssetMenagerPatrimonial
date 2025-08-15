@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { Asset, AssetCategory, AssetStatus } from '../../types';
-import { ITIcon, FurnitureIcon, VehicleIcon } from '../shared/Icons';
+import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon } from '../shared/Icons';
 
 interface AddAssetViewProps {
   onAddAsset: (asset: Omit<Asset, 'id'>) => void;
@@ -40,6 +40,20 @@ const CategorySelector: React.FC<{
 export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
   const [category, setCategory] = useState<AssetCategory | null>(null);
   const [formData, setFormData] = useState<Partial<Omit<Asset, 'id'>>>({});
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            setPhotoPreview(result);
+            setFormData(prev => ({ ...prev, photoUrl: result }));
+        };
+        reader.readAsDataURL(file);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -61,26 +75,29 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
     e.preventDefault();
     if (!category) return;
     
-    // Add default empty structures to satisfy type constraints
+    const defaultPhotoUrl = category === 'Furniture' ? `https://picsum.photos/seed/${Date.now()}/400/300` : undefined;
+
     const completeAssetData = {
+      ...getCategorySpecificDefaults(category),
       ...formData,
       category,
+      photoUrl: formData.photoUrl || defaultPhotoUrl,
       history: [{ date: new Date().toISOString().split('T')[0], user: 'Admin', action: 'Ativo criado' }],
       acquisition: {
         value: Number(formData.acquisition?.value) || 0,
         ...formData.acquisition,
       },
-      ...getCategorySpecificDefaults(category),
     } as Omit<Asset, 'id'>;
 
     onAddAsset(completeAssetData);
     setCategory(null);
     setFormData({});
+    setPhotoPreview(null);
   };
 
   const getCategorySpecificDefaults = (cat: AssetCategory) => {
     switch (cat) {
-      case 'Furniture': return { photoUrl: `https://picsum.photos/seed/${Date.now()}/400/300`, maintenanceSchedule: [], allocationHistory: [] };
+      case 'Furniture': return { maintenanceSchedule: [], allocationHistory: [] };
       case 'IT': return { specs: {}, installedSoftware: [], repairHistory: [] };
       case 'Vehicle': return { vehicleData: {}, documentation: {}, preventiveMaintenance: [], fuelLogs: [] };
       default: return {};
@@ -105,6 +122,30 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
               {['Ativo', 'Em Manutenção', 'Sucateado', 'Em Estoque'].map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             <textarea name="description" placeholder="Descrição" onChange={handleInputChange} className={`${inputClasses} md:col-span-2`} rows={3}></textarea>
+          </div>
+        </div>
+
+        {/* Photo Upload Section */}
+        <div className="p-6 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 border-b pb-2">Foto do Ativo (Opcional)</h3>
+          <div className="flex items-center gap-6">
+            <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview do ativo" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-gray-400 text-center p-2">
+                  <PhotoIcon className="w-10 h-10 mx-auto text-gray-300" />
+                  <span className="text-xs mt-1 block">Preview</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <label htmlFor="photo-upload" className="cursor-pointer px-5 py-2.5 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-accent transition-colors">
+                Carregar Imagem
+              </label>
+              <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+              <p className="text-xs text-text-secondary mt-2">Use uma imagem nítida para identificar o ativo facilmente.<br/>Formatos suportados: PNG, JPG.</p>
+            </div>
           </div>
         </div>
 
