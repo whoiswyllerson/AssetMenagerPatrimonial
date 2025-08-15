@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus, Contract } from '../../types';
+import React, { useState, useMemo } from 'react';
+import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus, Contract, User } from '../../types';
 import { Card } from '../shared/Card';
 import { CheckInIcon, CheckOutIcon, DocumentIcon, ContractIcon } from '../shared/Icons';
 import { CheckoutModal } from './CheckoutModal';
@@ -10,6 +10,7 @@ interface AssetDetailsModalProps {
   onClose: () => void;
   onUpdate: (updatedAsset: Asset) => void;
   onDelete: (assetId: string) => void;
+  currentUser: User;
 }
 
 const DetailSection: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => (
@@ -26,9 +27,54 @@ const DetailItem: React.FC<{ label: string, value: React.ReactNode }> = ({ label
     </div>
 );
 
-export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onClose, onUpdate, onDelete }) => {
+const calculateDepreciation = (asset: Asset) => {
+    if (!asset.acquisition.usefulLifeInYears || asset.acquisition.usefulLifeInYears <= 0 || asset.acquisition.depreciationMethod !== 'Linear') {
+        return {
+            currentBookValue: asset.acquisition.value,
+            accumulatedDepreciation: 0,
+            isApplicable: false,
+        };
+    }
+
+    const { value: cost, purchaseDate, usefulLifeInYears } = asset.acquisition;
+    const annualDepreciation = cost / usefulLifeInYears;
+
+    const purchase = new Date(purchaseDate + 'T00:00:00');
+    const now = new Date();
+
+    if (now < purchase) {
+        return { currentBookValue: cost, accumulatedDepreciation: 0, isApplicable: true };
+    }
+
+    const diffTime = Math.abs(now.getTime() - purchase.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const elapsedYears = diffDays / 365.25;
+
+    let accumulatedDepreciation = annualDepreciation * elapsedYears;
+    accumulatedDepreciation = Math.min(accumulatedDepreciation, cost);
+
+    const currentBookValue = cost - accumulatedDepreciation;
+    
+    return {
+        currentBookValue: Math.max(0, currentBookValue),
+        accumulatedDepreciation: accumulatedDepreciation,
+        isApplicable: true,
+    };
+};
+
+export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onClose, onUpdate, onDelete, currentUser }) => {
     const [currentStatus, setCurrentStatus] = useState<AssetStatus>(asset.status);
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+    
+    const depreciationInfo = useMemo(() => calculateDepreciation(asset), [asset]);
+
+    const canEdit = useMemo(() => {
+        if (currentUser.role === 'Admin') return true;
+        if (currentUser.role === 'Gerente de Frota' && asset.category === 'Vehicle') return true;
+        return false;
+    }, [currentUser, asset]);
+
+    const canDelete = useMemo(() => currentUser.role === 'Admin', [currentUser]);
 
     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const newStatus = e.target.value as AssetStatus;
@@ -40,7 +86,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
             ...asset.history,
             {
                 date: new Date().toISOString().split('T')[0],
-                user: 'Admin',
+                user: currentUser.name,
                 action: `Status alterado para ${newStatus}`
             }
         ]
@@ -58,8 +104,6 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
     const handleCheckIn = () => {
         if (window.confirm(`Confirmar o check-in (devolução) de "${asset.name}"?`)) {
             const today = new Date().toISOString().split('T')[0];
-
-            // Find the last open allocation and close it
             const lastAllocation = [...asset.allocationHistory].reverse().find(a => a.endDate === null);
             const newAllocationHistory = asset.allocationHistory.map(a => 
                 (a === lastAllocation) ? { ...a, endDate: today } : a
@@ -74,12 +118,11 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                 },
                 history: [
                     ...asset.history,
-                    { date: today, user: 'Admin', action: `Check-in realizado por ${asset.location.responsible}` }
+                    { date: today, user: currentUser.name, action: `Check-in realizado por ${asset.location.responsible}` }
                 ],
                 allocationHistory: newAllocationHistory,
             };
             onUpdate(updatedAsset);
-            onClose();
         }
     };
 
@@ -94,7 +137,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
             },
             history: [
                 ...asset.history,
-                { date: today, user: 'Admin', action: `Check-out realizado para ${responsible}` }
+                { date: today, user: currentUser.name, action: `Check-out realizado para ${responsible}` }
             ],
             allocationHistory: [
                 ...asset.allocationHistory,
@@ -103,7 +146,6 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
         };
         onUpdate(updatedAsset);
         setIsCheckoutModalOpen(false);
-        onClose();
     };
 
     const getContractStatus = (endDate: string) => {
@@ -121,12 +163,6 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
         }
         return { text: 'Ativo', color: 'bg-status-green/20 text-status-green' };
     };
-
-    const renderFurnitureDetails = (asset: FurnitureAsset) => (
-      <>
-        {/* Allocation history is now rendered for all assets */}
-      </>
-    );
 
     const renderITDetails = (asset: ITAsset) => (
       <DetailSection title="Especificações Técnicas">
@@ -187,7 +223,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                 <DetailItem label="Nº de Série" value={asset.serialNumber} />
                                 {asset.identifiers?.rfid && <DetailItem label="Código RFID" value={asset.identifiers.rfid} />}
                                 <DetailItem label="Situação" value={
-                                  <select value={currentStatus} onChange={handleStatusChange} className="p-1 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                                  <select value={asset.status} onChange={handleStatusChange} disabled={!canEdit} className="p-1 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:bg-gray-100 disabled:text-gray-500">
                                     {['Ativo', 'Em Manutenção', 'Sucateado', 'Em Estoque'].map(s => <option key={s} value={s}>{s}</option>)}
                                   </select>
                                 } />
@@ -204,6 +240,20 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                 <DetailItem label="Fornecedor" value={asset.acquisition.supplier} />
                                 <DetailItem label="Nota Fiscal" value={asset.acquisition.invoice} />
                             </DetailSection>
+                            
+                            {depreciationInfo.isApplicable && (
+                                <DetailSection title="Depreciação (Método Linear)">
+                                    <DetailItem 
+                                        label="Valor Contábil Atual" 
+                                        value={<span className="font-bold text-green-700">{depreciationInfo.currentBookValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>}
+                                    />
+                                    <DetailItem 
+                                        label="Depreciação Acumulada" 
+                                        value={depreciationInfo.accumulatedDepreciation.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} 
+                                    />
+                                    <DetailItem label="Vida Útil" value={`${asset.acquisition.usefulLifeInYears} anos`} />
+                                </DetailSection>
+                            )}
 
                             {asset.documentUrl && asset.documentName && (
                                 <DetailSection title="Documento Anexado">
@@ -264,7 +314,6 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                     </div>
                                 </DetailSection>
                             )}
-                            {asset.category === 'Furniture' && renderFurnitureDetails(asset as FurnitureAsset)}
                             {asset.category === 'IT' && renderITDetails(asset as ITAsset)}
                             {asset.category === 'Vehicle' && renderVehicleDetails(asset as VehicleAsset)}
                         </div>
@@ -273,7 +322,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
 
                  <div className="p-4 bg-white mt-auto border-t flex justify-between items-center">
                     <div className="flex items-center space-x-3">
-                         {asset.status === 'Em Estoque' && (
+                         {canEdit && asset.status === 'Em Estoque' && (
                             <button 
                                 onClick={() => setIsCheckoutModalOpen(true)}
                                 className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-colors font-medium text-sm"
@@ -282,7 +331,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                 Check-out
                             </button>
                         )}
-                        {asset.status === 'Ativo' && (
+                        {canEdit && asset.status === 'Ativo' && (
                             <button 
                                 onClick={handleCheckIn}
                                 className="flex items-center px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors font-medium text-sm"
@@ -293,12 +342,14 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                         )}
                     </div>
                     <div className="flex items-center space-x-3">
-                        <button 
-                            onClick={handleDelete}
-                            className="px-4 py-2 rounded-lg bg-status-red text-white hover:bg-red-700 transition-colors text-sm font-medium"
-                        >
-                            Excluir Ativo
-                        </button>
+                        {canDelete && (
+                            <button 
+                                onClick={handleDelete}
+                                className="px-4 py-2 rounded-lg bg-status-red text-white hover:bg-red-700 transition-colors text-sm font-medium"
+                            >
+                                Excluir Ativo
+                            </button>
+                        )}
                         <button 
                             onClick={onClose} 
                             className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors text-sm font-medium"

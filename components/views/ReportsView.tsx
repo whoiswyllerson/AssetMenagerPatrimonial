@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import type { Asset, AssetCategory, AssetStatus } from '../../types';
 import { Card } from '../shared/Card';
 import { DocumentIcon } from '../shared/Icons';
@@ -98,7 +98,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
       tableRows.push(assetData);
     });
 
-    (doc as any).autoTable({
+    autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
         startY: 30,

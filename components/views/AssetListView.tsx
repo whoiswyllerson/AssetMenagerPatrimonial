@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import type { Asset, AssetStatus } from '../../types';
+import type { Asset, AssetStatus, User } from '../../types';
 import { AssetDetailsModal } from '../modals/AssetDetailsModal';
 import { DragHandleIcon, DashboardIcon } from '../shared/Icons';
 
@@ -10,6 +10,7 @@ interface AssetListViewProps {
   category: string;
   onUpdateAsset: (updatedAsset: Asset) => void;
   onDeleteAsset: (assetId: string) => void;
+  currentUser: User;
 }
 
 const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
@@ -58,10 +59,9 @@ const DraggableRow: React.FC<{
     }),
   });
 
-  // Connect the drag source, drop target, and preview to their respective nodes imperatively.
-  drag(dragHandleRef); // The handle is the drag source
-  drop(rowRef);      // The row is the drop target
-  preview(rowRef);   // The row is the preview
+  drag(dragHandleRef);
+  drop(rowRef);
+  preview(rowRef);
 
   return (
     <tr ref={rowRef} style={{ opacity: isDragging ? 0.5 : 1 }} className="bg-white hover:bg-gray-50 border-b">
@@ -87,13 +87,28 @@ const DraggableRow: React.FC<{
 };
 
 
-export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset }) => {
+export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset, currentUser }) => {
   const [currentAssets, setCurrentAssets] = useState(assets);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   
   React.useEffect(() => {
     setCurrentAssets(assets);
   }, [assets]);
+
+  React.useEffect(() => {
+    // If an asset is selected in the modal, this ensures its data is kept in sync 
+    // with the main asset list from props, reflecting any updates immediately.
+    if (selectedAsset) {
+        const updatedAsset = assets.find(a => a.id === selectedAsset.id);
+        if (updatedAsset) {
+            setSelectedAsset(updatedAsset);
+        } else {
+            // Asset was deleted or filtered out, so close the modal
+            setSelectedAsset(null);
+        }
+    }
+  }, [assets]);
+
 
   const { totalCount, totalValue } = useMemo(() => {
     const count = assets.length;
@@ -172,6 +187,7 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
           onClose={() => setSelectedAsset(null)}
           onUpdate={onUpdateAsset}
           onDelete={onDeleteAsset}
+          currentUser={currentUser}
         />
       )}
     </div>

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon } from '../shared/Icons';
+import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon, ChevronDownIcon } from '../shared/Icons';
+import type { User } from '../../types';
 
 interface Alert {
     type: 'Maintenance' | 'License' | 'Contract';
@@ -12,6 +13,9 @@ interface HeaderProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     alerts: Alert[];
+    currentUser: User;
+    users: User[];
+    onUserChange: (user: User) => void;
 }
 
 const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
@@ -23,21 +27,26 @@ const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
     }
 }
 
-export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts }) => {
+export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts, currentUser, users, onUserChange }) => {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const notificationsRef = useRef<HTMLDivElement>(null);
+    const userMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
                 setIsNotificationsOpen(false);
             }
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [notificationsRef]);
+    }, []);
 
     const handleSimulateEmail = (alert: Alert) => {
         window.alert(`Simulação de E-mail:\n\nPara: ${alert.responsible}\nAssunto: Alerta de Ativo\n\nMensagem: ${alert.message}`);
@@ -96,16 +105,41 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                         </div>
                     )}
                 </div>
-                <div className="flex items-center space-x-3">
-                    <img
-                        className="h-10 w-10 rounded-full object-cover"
-                        src="https://picsum.photos/seed/user/100/100"
-                        alt="User avatar"
-                    />
-                    <div>
-                        <p className="font-semibold text-sm text-text-primary">Admin</p>
-                        <p className="text-xs text-text-secondary">System Administrator</p>
-                    </div>
+                <div className="relative" ref={userMenuRef}>
+                    <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center space-x-3 cursor-pointer">
+                        <img
+                            className="h-10 w-10 rounded-full object-cover"
+                            src={currentUser.avatar}
+                            alt="User avatar"
+                        />
+                        <div>
+                            <p className="font-semibold text-sm text-text-primary text-left">{currentUser.name}</p>
+                            <p className="text-xs text-text-secondary">{currentUser.role}</p>
+                        </div>
+                        <ChevronDownIcon className="text-gray-500"/>
+                    </button>
+                    {isUserMenuOpen && (
+                         <div className="absolute right-0 mt-3 w-60 bg-white rounded-lg shadow-xl border z-30">
+                            <div className="p-2 border-b">
+                                <h3 className="font-semibold text-sm text-text-primary px-2">Trocar Usuário (Simulação)</h3>
+                            </div>
+                            <div className="py-1">
+                                {users.map(user => (
+                                    <a
+                                        key={user.id}
+                                        onClick={() => { onUserChange(user); setIsUserMenuOpen(false); }}
+                                        className={`flex items-center px-4 py-2 text-sm text-text-primary hover:bg-gray-100 cursor-pointer ${currentUser.id === user.id ? 'font-bold bg-gray-100' : ''}`}
+                                    >
+                                        <img src={user.avatar} className="h-8 w-8 rounded-full mr-3" />
+                                        <div>
+                                            <p>{user.name}</p>
+                                            <p className="text-xs text-text-secondary">{user.role}</p>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

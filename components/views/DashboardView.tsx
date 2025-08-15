@@ -1,9 +1,8 @@
-
 import React, { useMemo } from 'react';
 import type { Asset } from '../../types';
 import { Card } from '../shared/Card';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ExclamationTriangleIcon, DashboardIcon, CheckCircleIcon, FurnitureIcon, BellIcon, WrenchIcon, ContractIcon } from '../shared/Icons';
+import { ExclamationTriangleIcon, DashboardIcon, CalculatorIcon, BellIcon, WrenchIcon, ContractIcon } from '../shared/Icons';
 
 interface Alert {
   type: 'Maintenance' | 'License' | 'Contract';
@@ -58,19 +57,44 @@ const getAlertColors = (type: Alert['type']) => {
     }
 };
 
+const calculateDepreciation = (asset: Asset) => {
+    if (!asset.acquisition.usefulLifeInYears || asset.acquisition.usefulLifeInYears <= 0 || asset.acquisition.depreciationMethod !== 'Linear') {
+        return { accumulatedDepreciation: 0 };
+    }
+
+    const { value: cost, purchaseDate, usefulLifeInYears } = asset.acquisition;
+    const annualDepreciation = cost / usefulLifeInYears;
+
+    const purchase = new Date(purchaseDate + 'T00:00:00');
+    const now = new Date();
+
+    if (now < purchase) return { accumulatedDepreciation: 0 };
+
+    const diffTime = Math.abs(now.getTime() - purchase.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const elapsedYears = diffDays / 365.25;
+
+    const accumulatedDepreciation = Math.min(annualDepreciation * elapsedYears, cost);
+    
+    return { accumulatedDepreciation };
+};
+
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) => {
   const kpis = useMemo(() => {
     const totalValue = assets.reduce((sum, asset) => sum + asset.acquisition.value, 0);
-    const allocated = assets.filter(a => a.status === 'Ativo').length;
-    const notAllocated = assets.filter(a => a.status === 'Em Estoque').length;
+    const totalDepreciation = assets.reduce((sum, asset) => {
+        const { accumulatedDepreciation } = calculateDepreciation(asset);
+        return sum + accumulatedDepreciation;
+    }, 0);
+    
     return {
       totalAssets: assets.length,
       totalValue: totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-      allocated,
-      notAllocated,
+      totalDepreciation: totalDepreciation.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      activeAlerts: alerts.length,
     };
-  }, [assets]);
+  }, [assets, alerts]);
 
   const categoryData = useMemo(() => {
     const counts = assets.reduce((acc, asset) => {
@@ -87,6 +111,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
     }, {} as Record<string, number>);
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [assets]);
+  
+  const depreciationByCategoryData = useMemo(() => {
+    const data = assets.reduce((acc, asset) => {
+      const { accumulatedDepreciation } = calculateDepreciation(asset);
+      if (accumulatedDepreciation > 0) {
+        const categoryName = asset.category === 'IT' ? 'Informática' : asset.category === 'Furniture' ? 'Mobiliário' : 'Veículos';
+        acc[categoryName] = (acc[categoryName] || 0) + accumulatedDepreciation;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+    return Object.entries(data).map(([name, value]) => ({ name, value }));
+  }, [assets]);
+
 
   const COLORS = ['#0052CC', '#4C9AFF', '#091E42', '#5E6C84'];
 
@@ -97,9 +134,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard title="Total de Ativos" value={kpis.totalAssets} icon={<DashboardIcon className="h-6 w-6 text-brand-primary" />} />
-        <KpiCard title="Valor Total" value={kpis.totalValue} icon={<span className="text-2xl font-bold text-brand-primary">R$</span>} />
-        <KpiCard title="Alocados" value={kpis.allocated} icon={<CheckCircleIcon className="h-6 w-6 text-brand-primary" />} />
-        <KpiCard title="Em Estoque" value={kpis.notAllocated} icon={<FurnitureIcon className="h-6 w-6 text-brand-primary" />} />
+        <KpiCard title="Valor Total de Aquisição" value={kpis.totalValue} icon={<span className="text-2xl font-bold text-brand-primary">R$</span>} />
+        <KpiCard title="Total Depreciado" value={kpis.totalDepreciation} icon={<CalculatorIcon className="h-6 w-6 text-brand-primary" />} />
+        <KpiCard title="Alertas Ativos" value={kpis.activeAlerts} icon={<BellIcon className="h-6 w-6 text-brand-primary" />} />
       </div>
 
       {/* Charts and Alerts */}
@@ -131,6 +168,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
             </ResponsiveContainer>
         </Card>
       </div>
+
+      <Card>
+        <h2 className="text-lg font-semibold text-brand-secondary mb-4">Depreciação Acumulada por Categoria</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={depreciationByCategoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis tickFormatter={(value) => `R$${(value/1000).toFixed(0)}k`} />
+            <Tooltip 
+              cursor={{fill: 'rgba(255, 171, 0, 0.1)'}}
+              formatter={(value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            />
+            <Bar dataKey="value" name="Depreciação Acumulada" fill="#FFAB00" barSize={40} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
 
       <Card>
         <h2 className="text-lg font-semibold text-brand-secondary mb-4 flex items-center">

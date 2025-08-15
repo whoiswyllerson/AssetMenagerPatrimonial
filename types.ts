@@ -1,7 +1,14 @@
-
 export type AssetCategory = 'IT' | 'Furniture' | 'Vehicle';
 export type AssetStatus = 'Ativo' | 'Em Manutenção' | 'Sucateado' | 'Em Estoque';
 export type ContractType = 'Garantia' | 'Manutenção' | 'Seguro';
+export type UserRole = 'Admin' | 'Gerente de Frota' | 'Colaborador';
+
+export interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+  avatar: string;
+}
 
 export interface Location {
   physicalLocation: string;
@@ -13,6 +20,8 @@ export interface Acquisition {
   value: number;
   invoice: string;
   supplier: string;
+  usefulLifeInYears?: number;
+  depreciationMethod?: 'Linear';
 }
 
 export interface Maintenance {

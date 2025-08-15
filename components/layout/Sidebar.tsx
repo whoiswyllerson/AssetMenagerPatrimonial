@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { View } from '../../App';
+import type { User } from '../../types';
 import { DashboardIcon, FurnitureIcon, ITIcon, VehicleIcon, AddAssetIcon, InventoryIcon, ReportsIcon } from '../shared/Icons';
 
 interface SidebarProps {
   currentView: View;
   setView: (view: View) => void;
+  currentUser: User;
 }
 
 const NavItem: React.FC<{
@@ -27,7 +29,7 @@ const NavItem: React.FC<{
   </li>
 );
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, currentUser }) => {
   const navItems: { view: View; label: string; icon: React.ReactNode }[] = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: <DashboardIcon className="w-5 h-5"/> },
     { view: 'FURNITURE', label: 'Mobiliário', icon: <FurnitureIcon className="w-5 h-5"/> },
@@ -38,6 +40,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
     { view: 'ADD_ASSET', label: 'Cadastrar Ativo', icon: <AddAssetIcon className="w-5 h-5"/> },
   ];
 
+  const visibleNavItems = useMemo(() => {
+    return navItems.filter(item => {
+        if (currentUser.role === 'Admin') return true;
+        if (currentUser.role === 'Gerente de Frota') {
+            return ['DASHBOARD', 'VEHICLES', 'INVENTORY', 'REPORTS'].includes(item.view);
+        }
+        if (currentUser.role === 'Colaborador') {
+            return ['DASHBOARD'].includes(item.view);
+        }
+        return false;
+    }).filter(item => {
+        if (item.view === 'ADD_ASSET' && currentUser.role !== 'Admin') {
+            return false;
+        }
+        return true;
+    });
+  }, [currentUser.role]);
+
   return (
     <nav className="w-64 bg-brand-secondary text-white flex flex-col p-4 shadow-lg">
       <div className="flex items-center mb-10 p-2">
@@ -47,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
         <h1 className="text-xl font-bold ml-3">AssetManager</h1>
       </div>
       <ul className="flex-1">
-        {navItems.map(item => (
+        {visibleNavItems.map(item => (
           <NavItem
             key={item.view}
             icon={item.icon}

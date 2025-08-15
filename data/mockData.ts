@@ -1,4 +1,10 @@
-import type { Asset } from '../types';
+import type { Asset, User } from '../types';
+
+export const mockUsers: User[] = [
+  { id: 'user-admin', name: 'Admin', role: 'Admin', avatar: 'https://i.pravatar.cc/150?u=admin' },
+  { id: 'user-roberto', name: 'Roberto Lima', role: 'Gerente de Frota', avatar: 'https://i.pravatar.cc/150?u=roberto' },
+  { id: 'user-ana', name: 'Ana Silva', role: 'Colaborador', avatar: 'https://i.pravatar.cc/150?u=ana' },
+];
 
 export const initialAssets: Asset[] = [
   {
@@ -8,7 +14,7 @@ export const initialAssets: Asset[] = [
     serialNumber: 'DXPS15-9510-12345',
     category: 'IT',
     location: { physicalLocation: 'Sala 301, Mesa 05', responsible: 'Ana Silva' },
-    acquisition: { purchaseDate: '2023-05-20', value: 12500, invoice: 'NF-58963', supplier: 'Dell Brasil' },
+    acquisition: { purchaseDate: '2023-05-20', value: 12500, invoice: 'NF-58963', supplier: 'Dell Brasil', usefulLifeInYears: 5, depreciationMethod: 'Linear' },
     status: 'Ativo',
     specs: { processor: 'Intel Core i9-11900H', ram: '32GB DDR4', storage: '1TB NVMe SSD' },
     installedSoftware: [
@@ -31,7 +37,7 @@ export const initialAssets: Asset[] = [
     serialNumber: 'PER750-XYZ-9876',
     category: 'IT',
     location: { physicalLocation: 'Data Center, Rack 02', responsible: 'Equipe de TI' },
-    acquisition: { purchaseDate: '2022-11-10', value: 45000, invoice: 'NF-41234', supplier: 'Dell Brasil' },
+    acquisition: { purchaseDate: '2022-11-10', value: 45000, invoice: 'NF-41234', supplier: 'Dell Brasil', usefulLifeInYears: 7, depreciationMethod: 'Linear' },
     status: 'Em Manutenção',
     specs: { processor: '2x Intel Xeon Gold 6338', ram: '256GB RDIMM', storage: '10TB SAS RAID 10' },
     installedSoftware: [{ id: 'SW-03', name: 'VMware vSphere 8', licenseKey: 'ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZ', expiryDate: '2026-11-10' }],
@@ -53,7 +59,7 @@ export const initialAssets: Asset[] = [
     serialNumber: 'HM-AERON-B-112233',
     category: 'Furniture',
     location: { physicalLocation: 'Sala 301, Mesa 05', responsible: 'Ana Silva' },
-    acquisition: { purchaseDate: '2023-05-20', value: 7800, invoice: 'NF-58964', supplier: 'Office Design' },
+    acquisition: { purchaseDate: '2023-05-20', value: 7800, invoice: 'NF-58964', supplier: 'Office Design', usefulLifeInYears: 10, depreciationMethod: 'Linear' },
     status: 'Ativo',
     photoUrl: 'https://picsum.photos/seed/chair/400/300',
     maintenanceSchedule: [],
@@ -85,7 +91,7 @@ export const initialAssets: Asset[] = [
     serialNumber: 'CHASSI-9BR-XYZ-123',
     category: 'Vehicle',
     location: { physicalLocation: 'Garagem - Vaga 21', responsible: 'Roberto Lima' },
-    acquisition: { purchaseDate: '2023-08-01', value: 195000, invoice: 'NF-98765', supplier: 'Toyota Tsusho' },
+    acquisition: { purchaseDate: '2023-08-01', value: 195000, invoice: 'NF-98765', supplier: 'Toyota Tsusho', usefulLifeInYears: 8, depreciationMethod: 'Linear' },
     status: 'Ativo',
     vehicleData: { plate: 'SDE2F45', renavam: '12345678901', model: 'Corolla Cross XRE', year: 2023, marketValue: 185000 },
     documentation: { ipvaDueDate: '2025-03-31', licensingDueDate: '2025-04-30', insuranceExpiry: '2025-08-01' },

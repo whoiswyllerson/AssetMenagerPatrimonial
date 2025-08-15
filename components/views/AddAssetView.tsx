@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import type { Asset, AssetCategory, Contract, ContractType } from '../../types';
 import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon } from '../shared/Icons';
 
 interface AddAssetViewProps {
-  onAddAsset: (asset: Omit<Asset, 'id'>) => void;
+  onAddAsset: (asset: Omit<Asset, 'id' | 'history'>) => void;
 }
 
 const CategorySelector: React.FC<{
@@ -114,13 +113,13 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
       category,
       contracts,
       photoUrl: formData.photoUrl || defaultPhotoUrl,
-      history: [{ date: new Date().toISOString().split('T')[0], user: 'Admin', action: 'Ativo criado' }],
       allocationHistory: [],
       acquisition: {
+        ...(formData.acquisition as any),
         value: Number(formData.acquisition?.value) || 0,
-        ...formData.acquisition,
+        usefulLifeInYears: formData.acquisition?.usefulLifeInYears ? Number(formData.acquisition.usefulLifeInYears) : undefined,
       },
-    } as Omit<Asset, 'id'>;
+    } as Omit<Asset, 'id' | 'history'>;
 
     onAddAsset(completeAssetData);
     setCategory(null);
@@ -207,12 +206,17 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
         {/* Acquisition & Location */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="p-6 border rounded-lg">
-                <h3 className="text-lg font-semibold mb-4 border-b pb-2">Aquisição</h3>
+                <h3 className="text-lg font-semibold mb-4 border-b pb-2">Aquisição e Depreciação</h3>
                 <div className="space-y-4">
                     <input type="date" name="acquisition.purchaseDate" onChange={handleInputChange} className={inputClasses} />
-                    <input type="number" name="acquisition.value" placeholder="Valor de Aquisição (R$)" onChange={handleInputChange} className={inputClasses} />
+                    <input type="number" step="0.01" name="acquisition.value" placeholder="Valor de Aquisição (R$)" onChange={handleInputChange} className={inputClasses} />
                     <input name="acquisition.supplier" placeholder="Fornecedor" onChange={handleInputChange} className={inputClasses} />
                     <input name="acquisition.invoice" placeholder="Nota Fiscal" onChange={handleInputChange} className={inputClasses} />
+                    <input type="number" name="acquisition.usefulLifeInYears" placeholder="Vida Útil (em anos)" onChange={handleInputChange} className={inputClasses} />
+                    <select name="acquisition.depreciationMethod" onChange={handleInputChange} className={inputClasses} defaultValue="">
+                        <option value="" disabled>Método de Depreciação</option>
+                        <option value="Linear">Linear</option>
+                    </select>
                 </div>
             </div>
             <div className="p-6 border rounded-lg">
