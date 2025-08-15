@@ -14,7 +14,9 @@
     "react-dom": "^19.1.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dnd": "^16.0.1",
-    "html5-qrcode": "2.3.8"
+    "html5-qrcode": "2.3.8",
+    "jspdf": "2.5.1",
+    "jspdf-autotable": "3.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

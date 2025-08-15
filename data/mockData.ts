@@ -20,6 +20,9 @@ export const initialAssets: Asset[] = [
     lastAuditedDate: '2024-07-01',
     identifiers: { qrCode: 'IT-001' },
     allocationHistory: [{ user: 'Ana Silva', startDate: '2023-05-21', endDate: null }],
+    contracts: [
+      { id: 'CONT-001', type: 'Garantia', supplier: 'Dell Brasil', startDate: '2023-05-20', endDate: '2025-05-19', details: 'Garantia ProSupport Plus' }
+    ],
   },
   {
     id: 'IT-002',
@@ -39,6 +42,9 @@ export const initialAssets: Asset[] = [
     ],
     identifiers: { qrCode: 'IT-002' },
     allocationHistory: [],
+    contracts: [
+      { id: 'CONT-002', type: 'Manutenção', supplier: 'Service TI', startDate: '2023-01-01', endDate: '2024-12-31', details: 'Contrato de manutenção 24/7' }
+    ],
   },
   {
     id: 'FUR-001',
@@ -55,6 +61,7 @@ export const initialAssets: Asset[] = [
     history: [{ date: '2023-05-21', user: 'Admin', action: 'Ativo criado' }],
     lastAuditedDate: '2024-06-15',
     identifiers: { qrCode: 'FUR-001' },
+    contracts: [],
   },
   {
     id: 'FUR-002',
@@ -69,6 +76,7 @@ export const initialAssets: Asset[] = [
     maintenanceSchedule: [{ id: 'MAINT-FUR-01', date: '2024-08-15', type: 'Limpeza e Polimento', description: 'Limpeza profissional agendada.', cost: 300 }],
     allocationHistory: [],
      history: [{ date: '2021-02-15', user: 'Admin', action: 'Ativo criado' }],
+     contracts: [],
   },
   {
     id: 'VEH-001',
@@ -89,6 +97,9 @@ export const initialAssets: Asset[] = [
     history: [{ date: '2023-08-01', user: 'Admin', action: 'Ativo criado' }],
     identifiers: { qrCode: 'VEH-001' },
     allocationHistory: [{ user: 'Roberto Lima', startDate: '2023-08-01', endDate: null }],
+    contracts: [
+      { id: 'CONT-003', type: 'Seguro', supplier: 'Porto Seguro', startDate: '2023-08-01', endDate: '2024-08-01', details: 'Apólice Nº 987654' }
+    ],
   },
   {
     id: 'IT-003',
@@ -105,6 +116,7 @@ export const initialAssets: Asset[] = [
     history: [{ date: '2024-01-10', user: 'Admin', action: 'Ativo criado' }],
     identifiers: { qrCode: 'IT-003' },
     allocationHistory: [{ user: 'Julia Costa', startDate: '2024-01-10', endDate: null }],
+    contracts: [],
   },
    {
     id: 'FUR-003',
@@ -119,5 +131,6 @@ export const initialAssets: Asset[] = [
     maintenanceSchedule: [],
     allocationHistory: [],
     history: [{ date: '2020-07-22', user: 'Admin', action: 'Ativo criado' }],
+    contracts: [],
   },
 ];

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import type { View } from '../../App';
-import { DashboardIcon, FurnitureIcon, ITIcon, VehicleIcon, AddAssetIcon, InventoryIcon } from '../shared/Icons';
+import { DashboardIcon, FurnitureIcon, ITIcon, VehicleIcon, AddAssetIcon, InventoryIcon, ReportsIcon } from '../shared/Icons';
 
 interface SidebarProps {
   currentView: View;
@@ -34,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
     { view: 'IT', label: 'Informática', icon: <ITIcon className="w-5 h-5"/> },
     { view: 'VEHICLES', label: 'Veículos', icon: <VehicleIcon className="w-5 h-5"/> },
     { view: 'INVENTORY', label: 'Inventário', icon: <InventoryIcon className="w-5 h-5"/> },
+    { view: 'REPORTS', label: 'Relatórios', icon: <ReportsIcon className="w-5 h-5"/> },
     { view: 'ADD_ASSET', label: 'Cadastrar Ativo', icon: <AddAssetIcon className="w-5 h-5"/> },
   ];
 

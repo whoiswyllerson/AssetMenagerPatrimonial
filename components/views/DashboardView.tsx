@@ -3,11 +3,12 @@ import React, { useMemo } from 'react';
 import type { Asset } from '../../types';
 import { Card } from '../shared/Card';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ExclamationTriangleIcon, DashboardIcon, CheckCircleIcon, FurnitureIcon, BellIcon } from '../shared/Icons';
+import { ExclamationTriangleIcon, DashboardIcon, CheckCircleIcon, FurnitureIcon, BellIcon, WrenchIcon, ContractIcon } from '../shared/Icons';
 
 interface Alert {
-  type: 'Maintenance' | 'License';
+  type: 'Maintenance' | 'License' | 'Contract';
   message: string;
+  responsible: string;
 }
 
 interface DashboardViewProps {
@@ -26,6 +27,37 @@ const KpiCard: React.FC<{ title: string; value: string | number; icon: React.Rea
     </div>
   </Card>
 );
+
+const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
+    switch (type) {
+        case 'Maintenance': return <WrenchIcon className="w-5 h-5 text-status-yellow mr-3 mt-1 flex-shrink-0" />;
+        case 'License': return <ExclamationTriangleIcon className="w-5 h-5 text-status-red mr-3 mt-1 flex-shrink-0" />;
+        case 'Contract': return <ContractIcon className="w-5 h-5 text-status-yellow mr-3 mt-1 flex-shrink-0" />;
+        default: return <ExclamationTriangleIcon className="w-5 h-5 text-gray-400 mr-3 mt-1 flex-shrink-0" />;
+    }
+};
+
+const getAlertColors = (type: Alert['type']) => {
+    switch (type) {
+        case 'Maintenance':
+        case 'Contract':
+            return {
+                container: 'bg-yellow-50 border-yellow-200',
+                text: 'text-yellow-800'
+            };
+        case 'License':
+            return {
+                container: 'bg-red-50 border-red-200',
+                text: 'text-red-800'
+            };
+        default:
+            return {
+                container: 'bg-gray-50 border-gray-200',
+                text: 'text-gray-800'
+            };
+    }
+};
+
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) => {
   const kpis = useMemo(() => {
@@ -105,12 +137,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
           <BellIcon className="w-6 h-6 mr-2 text-brand-primary" /> Alertas e Próximas Ações
         </h2>
         <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-          {alerts.length > 0 ? alerts.map((alert, index) => (
-            <div key={index} className="flex items-start p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-                <ExclamationTriangleIcon className="w-5 h-5 text-status-yellow mr-3 mt-1 flex-shrink-0" />
-              <p className="text-sm text-yellow-800">{alert.message}</p>
-            </div>
-          )) : (
+          {alerts.length > 0 ? alerts.map((alert, index) => {
+            const colors = getAlertColors(alert.type);
+            return (
+                <div key={index} className={`flex items-start p-3 rounded-lg border ${colors.container}`}>
+                    <AlertIcon type={alert.type} />
+                  <p className={`text-sm ${colors.text}`}>{alert.message}</p>
+                </div>
+            );
+          }) : (
             <p className="text-text-secondary text-sm">Nenhum alerta para os próximos 30 dias.</p>
           )}
         </div>

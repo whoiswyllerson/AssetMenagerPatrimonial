@@ -10,8 +10,9 @@ import { AddAssetView } from './components/views/AddAssetView';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { InventoryView } from './components/views/InventoryView';
+import { ReportsView } from './components/views/ReportsView';
 
-export type View = 'DASHBOARD' | 'FURNITURE' | 'IT' | 'VEHICLES' | 'ADD_ASSET' | 'INVENTORY';
+export type View = 'DASHBOARD' | 'FURNITURE' | 'IT' | 'VEHICLES' | 'ADD_ASSET' | 'INVENTORY' | 'REPORTS';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('DASHBOARD');
@@ -77,15 +78,21 @@ const App: React.FC = () => {
     const maintenanceAlerts = assets
       .flatMap(asset => 'maintenanceSchedule' in asset ? asset.maintenanceSchedule : ('preventiveMaintenance' in asset ? asset.preventiveMaintenance : []))
       .filter(m => new Date(m.date) > now && new Date(m.date) <= thirtyDaysFromNow)
-      .map(m => ({ type: 'Maintenance' as const, message: `Manutenção '${m.type}' agendada para ${new Date(m.date).toLocaleDateString()}` }));
+      .map(m => ({ type: 'Maintenance' as const, message: `Manutenção '${m.type}' agendada para ${new Date(m.date).toLocaleDateString()}`, responsible: 'N/A' }));
 
     const licenseAlerts = assets
       .filter(asset => asset.category === 'IT' && 'installedSoftware' in asset)
-      .flatMap(asset => (asset as any).installedSoftware)
+      .flatMap(asset => (asset as any).installedSoftware.map((s: any) => ({ ...s, responsible: asset.location.responsible })))
       .filter((s: any) => s.expiryDate !== 'Perpétua' && new Date(s.expiryDate) > now && new Date(s.expiryDate) <= thirtyDaysFromNow)
-      .map((s: any) => ({ type: 'License' as const, message: `Licença do software '${s.name}' expira em ${new Date(s.expiryDate).toLocaleDateString()}` }));
+      .map((s: any) => ({ type: 'License' as const, message: `Licença do software '${s.name}' expira em ${new Date(s.expiryDate).toLocaleDateString()}`, responsible: s.responsible }));
       
-    return [...maintenanceAlerts, ...licenseAlerts];
+    const contractAlerts = assets
+      .filter(asset => asset.contracts && asset.contracts.length > 0)
+      .flatMap(asset => asset.contracts!.map(c => ({...c, assetName: asset.name, responsible: asset.location.responsible})))
+      .filter(c => new Date(c.endDate) > now && new Date(c.endDate) <= thirtyDaysFromNow)
+      .map(c => ({ type: 'Contract' as const, message: `O contrato '${c.type}' para o ativo '${c.assetName}' expira em ${new Date(c.endDate).toLocaleDateString()}`, responsible: c.responsible }));
+
+    return [...maintenanceAlerts, ...licenseAlerts, ...contractAlerts];
   }, [assets]);
 
   const renderView = () => {
@@ -104,6 +111,8 @@ const App: React.FC = () => {
         return <AddAssetView onAddAsset={addAsset} />;
       case 'INVENTORY':
         return <InventoryView assets={filteredAssets} onAuditAsset={auditAsset} />;
+      case 'REPORTS':
+        return <ReportsView assets={filteredAssets} />;
       default:
         return <DashboardView assets={filteredAssets} alerts={alerts} />;
     }

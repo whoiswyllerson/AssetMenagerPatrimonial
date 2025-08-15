@@ -1,16 +1,26 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SearchIcon, BellIcon, ExclamationTriangleIcon } from '../shared/Icons';
+import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon } from '../shared/Icons';
 
 interface Alert {
-    type: 'Maintenance' | 'License';
+    type: 'Maintenance' | 'License' | 'Contract';
     message: string;
+    responsible: string;
 }
 
 interface HeaderProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     alerts: Alert[];
+}
+
+const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
+    switch (type) {
+        case 'Maintenance': return <WrenchIcon className="w-5 h-5 text-status-yellow mr-3 mt-1 flex-shrink-0" />;
+        case 'License': return <ExclamationTriangleIcon className="w-5 h-5 text-status-red mr-3 mt-1 flex-shrink-0" />;
+        case 'Contract': return <ContractIcon className="w-5 h-5 text-status-yellow mr-3 mt-1 flex-shrink-0" />;
+        default: return <ExclamationTriangleIcon className="w-5 h-5 text-gray-400 mr-3 mt-1 flex-shrink-0" />;
+    }
 }
 
 export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts }) => {
@@ -28,6 +38,10 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [notificationsRef]);
+
+    const handleSimulateEmail = (alert: Alert) => {
+        window.alert(`Simulação de E-mail:\n\nPara: ${alert.responsible}\nAssunto: Alerta de Ativo\n\nMensagem: ${alert.message}`);
+    }
     
     return (
         <header className="bg-white shadow-sm p-4 flex justify-between items-center z-20">
@@ -54,16 +68,25 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                         )}
                     </button>
                     {isNotificationsOpen && (
-                        <div className="absolute right-0 mt-3 w-80 bg-white rounded-lg shadow-xl border z-30">
+                        <div className="absolute right-0 mt-3 w-96 bg-white rounded-lg shadow-xl border z-30">
                             <div className="p-3 border-b">
                                 <h3 className="font-semibold text-text-primary">Notificações</h3>
                             </div>
-                            <div className="max-h-80 overflow-y-auto">
+                            <div className="max-h-96 overflow-y-auto">
                                 {alerts.length > 0 ? (
                                     alerts.map((alert, index) => (
                                         <div key={index} className="flex items-start p-3 hover:bg-gray-50 border-b last:border-b-0">
-                                            <ExclamationTriangleIcon className="w-5 h-5 text-status-yellow mr-3 mt-1 flex-shrink-0" />
-                                            <p className="text-sm text-text-secondary">{alert.message}</p>
+                                            <AlertIcon type={alert.type} />
+                                            <div className="flex-1">
+                                                <p className="text-sm text-text-secondary">{alert.message}</p>
+                                                <button 
+                                                    onClick={() => handleSimulateEmail(alert)} 
+                                                    className="text-xs text-brand-primary hover:underline mt-2 flex items-center"
+                                                >
+                                                    <EmailIcon className="mr-1"/>
+                                                    Simular Envio de E-mail para {alert.responsible}
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 ) : (

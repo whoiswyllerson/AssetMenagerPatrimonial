@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus } from '../../types';
+import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus, Contract } from '../../types';
 import { Card } from '../shared/Card';
-import { CheckInIcon, CheckOutIcon, DocumentIcon } from '../shared/Icons';
+import { CheckInIcon, CheckOutIcon, DocumentIcon, ContractIcon } from '../shared/Icons';
 import { CheckoutModal } from './CheckoutModal';
 
 interface AssetDetailsModalProps {
@@ -104,6 +104,22 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
         onUpdate(updatedAsset);
         setIsCheckoutModalOpen(false);
         onClose();
+    };
+
+    const getContractStatus = (endDate: string) => {
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        const end = new Date(endDate + 'T00:00:00');
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(now.getDate() + 30);
+        
+        if (end < now) {
+            return { text: 'Expirado', color: 'bg-status-red/20 text-status-red' };
+        }
+        if (end <= thirtyDaysFromNow) {
+            return { text: 'Expirando', color: 'bg-status-yellow/20 text-status-yellow' };
+        }
+        return { text: 'Ativo', color: 'bg-status-green/20 text-status-green' };
     };
 
     const renderFurnitureDetails = (asset: FurnitureAsset) => (
@@ -222,6 +238,29 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                 <DetailSection title="Foto do Ativo">
                                     <div className="flex justify-center my-2">
                                         <img src={asset.photoUrl} alt={asset.name} className="rounded-lg max-h-48 shadow-md object-contain" />
+                                    </div>
+                                </DetailSection>
+                            )}
+                            {asset.contracts && asset.contracts.length > 0 && (
+                                <DetailSection title="Contratos e Garantias">
+                                    <div className="space-y-3">
+                                        {asset.contracts.map(contract => {
+                                            const status = getContractStatus(contract.endDate);
+                                            return (
+                                                <div key={contract.id} className="p-3 rounded-lg border bg-white">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <p className="font-semibold text-text-primary">{contract.type} - {contract.supplier}</p>
+                                                            <p className="text-xs text-text-secondary">
+                                                                {new Date(contract.startDate + 'T00:00:00').toLocaleDateString()} - {new Date(contract.endDate + 'T00:00:00').toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${status.color}`}>{status.text}</span>
+                                                    </div>
+                                                    {contract.details && <p className="text-xs text-text-secondary mt-2 pt-2 border-t">{contract.details}</p>}
+                                                </div>
+                                            )
+                                        })}
                                     </div>
                                 </DetailSection>
                             )}

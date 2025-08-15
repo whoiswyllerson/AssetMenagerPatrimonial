@@ -1,9 +1,9 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Asset, AssetStatus } from '../../types';
 import { AssetDetailsModal } from '../modals/AssetDetailsModal';
-import { DragHandleIcon } from '../shared/Icons';
+import { DragHandleIcon, DashboardIcon } from '../shared/Icons';
 
 interface AssetListViewProps {
   assets: Asset[];
@@ -11,6 +11,18 @@ interface AssetListViewProps {
   onUpdateAsset: (updatedAsset: Asset) => void;
   onDeleteAsset: (assetId: string) => void;
 }
+
+const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
+  <div className="bg-white rounded-lg shadow-md p-4 flex items-center">
+    <div className="p-3 bg-brand-accent/10 rounded-full mr-4">
+      {icon}
+    </div>
+    <div>
+      <p className="text-sm text-text-secondary font-medium">{title}</p>
+      <p className="text-2xl font-bold text-text-primary">{value}</p>
+    </div>
+  </div>
+);
 
 const ItemTypes = {
   ROW: 'row',
@@ -83,6 +95,12 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
     setCurrentAssets(assets);
   }, [assets]);
 
+  const { totalCount, totalValue } = useMemo(() => {
+    const count = assets.length;
+    const value = assets.reduce((sum, asset) => sum + asset.acquisition.value, 0);
+    return { totalCount: count, totalValue: value };
+  }, [assets]);
+
   const moveRow = (dragIndex: number, hoverIndex: number) => {
     const dragRow = currentAssets[dragIndex];
     const newAssets = [...currentAssets];
@@ -104,6 +122,20 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-brand-secondary">{category}</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <KpiCard 
+          title="Total de Itens" 
+          value={totalCount} 
+          icon={<DashboardIcon className="h-6 w-6 text-brand-primary" />} 
+        />
+        <KpiCard 
+          title="Valor Total em Ativos" 
+          value={totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} 
+          icon={<span className="text-xl font-bold text-brand-primary h-6 w-6 flex items-center justify-center">R$</span>} 
+        />
+      </div>
+
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left text-text-secondary">

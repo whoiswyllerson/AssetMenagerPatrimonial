@@ -1,6 +1,7 @@
 
 export type AssetCategory = 'IT' | 'Furniture' | 'Vehicle';
 export type AssetStatus = 'Ativo' | 'Em Manutenção' | 'Sucateado' | 'Em Estoque';
+export type ContractType = 'Garantia' | 'Manutenção' | 'Seguro';
 
 export interface Location {
   physicalLocation: string;
@@ -38,6 +39,15 @@ export interface FuelLog {
   odometer: number;
 }
 
+export interface Contract {
+  id: string;
+  type: ContractType;
+  supplier: string;
+  startDate: string;
+  endDate: string;
+  details?: string;
+}
+
 interface BaseAsset {
   id: string;
   name: string;
@@ -62,6 +72,7 @@ interface BaseAsset {
   documentUrl?: string;
   documentName?: string;
   allocationHistory: { user: string; startDate: string; endDate: string | null }[];
+  contracts?: Contract[];
 }
 
 export interface FurnitureAsset extends BaseAsset {

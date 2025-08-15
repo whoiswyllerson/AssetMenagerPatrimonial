@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import type { Asset, AssetCategory, AssetStatus } from '../../types';
+import type { Asset, AssetCategory, Contract, ContractType } from '../../types';
 import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon } from '../shared/Icons';
 
 interface AddAssetViewProps {
@@ -96,10 +96,23 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
     
     const defaultPhotoUrl = category === 'Furniture' ? `https://picsum.photos/seed/${Date.now()}/400/300` : undefined;
 
+    const contracts: Contract[] = [];
+    const contractData = (formData as any).contract;
+    if(contractData && contractData.type && contractData.endDate) {
+        contracts.push({
+            id: `CONT-${Date.now()}`,
+            type: contractData.type,
+            supplier: contractData.supplier || '',
+            startDate: contractData.startDate || '',
+            endDate: contractData.endDate,
+        });
+    }
+
     const completeAssetData = {
       ...getCategorySpecificDefaults(category),
       ...formData,
       category,
+      contracts,
       photoUrl: formData.photoUrl || defaultPhotoUrl,
       history: [{ date: new Date().toISOString().split('T')[0], user: 'Admin', action: 'Ativo criado' }],
       allocationHistory: [],
@@ -210,6 +223,27 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
                 </div>
             </div>
         </div>
+        
+        {/* Contract Section */}
+        <div className="p-6 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 border-b pb-2">Contrato ou Garantia Inicial (Opcional)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <select name="contract.type" onChange={handleInputChange} className={inputClasses} defaultValue="">
+              <option value="" disabled>Tipo de Contrato</option>
+              {['Garantia', 'Manutenção', 'Seguro'].map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <input name="contract.supplier" placeholder="Fornecedor do Contrato" onChange={handleInputChange} className={inputClasses} />
+            <div>
+              <label className="text-xs text-text-secondary">Data de Início</label>
+              <input type="date" name="contract.startDate" onChange={handleInputChange} className={inputClasses} />
+            </div>
+            <div>
+              <label className="text-xs text-text-secondary">Data de Fim</label>
+              <input type="date" name="contract.endDate" onChange={handleInputChange} className={inputClasses} />
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-end space-x-4">
             <button type="button" onClick={() => setCategory(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Voltar</button>
             <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent">Salvar Ativo</button>
