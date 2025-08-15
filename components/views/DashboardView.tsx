@@ -1,0 +1,120 @@
+
+import React, { useMemo } from 'react';
+import type { Asset } from '../../types';
+import { Card } from '../shared/Card';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ExclamationTriangleIcon, DashboardIcon, CheckCircleIcon, FurnitureIcon, BellIcon } from '../shared/Icons';
+
+interface Alert {
+  type: 'Maintenance' | 'License';
+  message: string;
+}
+
+interface DashboardViewProps {
+  assets: Asset[];
+  alerts: Alert[];
+}
+
+const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
+  <Card className="flex items-center p-4">
+    <div className="p-3 bg-brand-accent/10 rounded-full mr-4">
+      {icon}
+    </div>
+    <div>
+      <p className="text-sm text-text-secondary font-medium">{title}</p>
+      <p className="text-2xl font-bold text-text-primary">{value}</p>
+    </div>
+  </Card>
+);
+
+export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) => {
+  const kpis = useMemo(() => {
+    const totalValue = assets.reduce((sum, asset) => sum + asset.acquisition.value, 0);
+    const allocated = assets.filter(a => a.status === 'Ativo').length;
+    const notAllocated = assets.filter(a => a.status === 'Em Estoque').length;
+    return {
+      totalAssets: assets.length,
+      totalValue: totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      allocated,
+      notAllocated,
+    };
+  }, [assets]);
+
+  const categoryData = useMemo(() => {
+    const counts = assets.reduce((acc, asset) => {
+      acc[asset.category] = (acc[asset.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [assets]);
+
+  const statusData = useMemo(() => {
+    const counts = assets.reduce((acc, asset) => {
+      acc[asset.status] = (acc[asset.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [assets]);
+
+  const COLORS = ['#0052CC', '#4C9AFF', '#091E42', '#5E6C84'];
+
+  return (
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold text-brand-secondary">Dashboard</h1>
+      
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KpiCard title="Total de Ativos" value={kpis.totalAssets} icon={<DashboardIcon className="h-6 w-6 text-brand-primary" />} />
+        <KpiCard title="Valor Total" value={kpis.totalValue} icon={<span className="text-2xl font-bold text-brand-primary">R$</span>} />
+        <KpiCard title="Alocados" value={kpis.allocated} icon={<CheckCircleIcon className="h-6 w-6 text-brand-primary" />} />
+        <KpiCard title="Em Estoque" value={kpis.notAllocated} icon={<FurnitureIcon className="h-6 w-6 text-brand-primary" />} />
+      </div>
+
+      {/* Charts and Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1">
+          <h2 className="text-lg font-semibold text-brand-secondary mb-4">Ativos por Categoria</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={categoryData} cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                {categoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => `${value} ativos`} />
+            </PieChart>
+          </ResponsiveContainer>
+        </Card>
+        
+        <Card className="lg:col-span-2">
+            <h2 className="text-lg font-semibold text-brand-secondary mb-4">Ativos por Situação</h2>
+            <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={statusData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip cursor={{fill: 'rgba(76, 154, 255, 0.1)'}} />
+                    <Legend />
+                    <Bar dataKey="value" name="Número de Ativos" fill="#0052CC" barSize={40} radius={[4, 4, 0, 0]} />
+                </BarChart>
+            </ResponsiveContainer>
+        </Card>
+      </div>
+
+      <Card>
+        <h2 className="text-lg font-semibold text-brand-secondary mb-4 flex items-center">
+          <BellIcon className="w-6 h-6 mr-2 text-brand-primary" /> Alertas e Próximas Ações
+        </h2>
+        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+          {alerts.length > 0 ? alerts.map((alert, index) => (
+            <div key={index} className="flex items-start p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+                <ExclamationTriangleIcon className="w-5 h-5 text-status-yellow mr-3 mt-1 flex-shrink-0" />
+              <p className="text-sm text-yellow-800">{alert.message}</p>
+            </div>
+          )) : (
+            <p className="text-text-secondary text-sm">Nenhum alerta para os próximos 30 dias.</p>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+};
