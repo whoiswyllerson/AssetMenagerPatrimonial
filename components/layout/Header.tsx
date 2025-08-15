@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon, ChevronDownIcon } from '../shared/Icons';
+import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon, ChevronDownIcon, QrCodeIcon } from '../shared/Icons';
 import type { User } from '../../types';
 
 interface Alert {
@@ -16,6 +16,7 @@ interface HeaderProps {
     currentUser: User;
     users: User[];
     onUserChange: (user: User) => void;
+    onScanClick: () => void;
 }
 
 const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
@@ -27,7 +28,7 @@ const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
     }
 }
 
-export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts, currentUser, users, onUserChange }) => {
+export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts, currentUser, users, onUserChange, onScanClick }) => {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const notificationsRef = useRef<HTMLDivElement>(null);
@@ -67,6 +68,9 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                 />
             </div>
             <div className="flex items-center space-x-6">
+                 <button onClick={onScanClick} title="Escanear Ativo" className="text-gray-500 hover:text-brand-primary">
+                    <QrCodeIcon className="w-6 h-6"/>
+                </button>
                 <div className="relative" ref={notificationsRef}>
                     <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="relative text-gray-500 hover:text-brand-primary">
                         <BellIcon />

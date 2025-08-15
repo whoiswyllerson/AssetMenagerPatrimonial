@@ -2,8 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import type { Asset, AssetCategory, User } from './types';
-import { initialAssets, mockUsers } from './data/mockData';
+import type { Asset, AssetCategory, User, Key } from './types';
+import { initialAssets, mockKeys, mockUsers } from './data/mockData';
 import { DashboardView } from './components/views/DashboardView';
 import { AssetListView } from './components/views/AssetListView';
 import { AddAssetView } from './components/views/AddAssetView';
@@ -11,14 +11,20 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { InventoryView } from './components/views/InventoryView';
 import { ReportsView } from './components/views/ReportsView';
+import { AssetDetailsModal } from './components/modals/AssetDetailsModal';
+import { QRScannerModal } from './components/modals/QRScannerModal';
+import { KeyManagementView } from './components/views/KeyManagementView';
 
-export type View = 'DASHBOARD' | 'FURNITURE' | 'IT' | 'VEHICLES' | 'ADD_ASSET' | 'INVENTORY' | 'REPORTS';
+export type View = 'DASHBOARD' | 'FURNITURE' | 'IT' | 'VEHICLES' | 'ADD_ITEM' | 'INVENTORY' | 'REPORTS' | 'KEY_MANAGEMENT';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('DASHBOARD');
   const [assets, setAssets] = useState<Asset[]>(initialAssets);
+  const [keys, setKeys] = useState<Key[]>(mockKeys);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState<User>(mockUsers[0]);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [isGlobalScannerOpen, setIsGlobalScannerOpen] = useState(false);
 
   const handleSetCurrentUser = (user: User) => {
     setCurrentUser(user);
@@ -47,6 +53,22 @@ const App: React.FC = () => {
     setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
   };
 
+  const addKey = (newKey: Omit<Key, 'id' | 'history'>) => {
+    const keyWithId = { 
+      ...newKey, 
+      id: `KEY-${Date.now()}`,
+      history: [{ date: new Date().toISOString().split('T')[0], user: currentUser.name, action: 'Chave criada', details: `Chave "${newKey.name}" adicionada ao sistema.` }],
+    };
+    setKeys(prev => [...prev, keyWithId]);
+    setView('KEY_MANAGEMENT');
+  };
+  const updateKey = (updatedKey: Key) => {
+    setKeys(prev => prev.map(key => key.id === updatedKey.id ? updatedKey : key));
+  };
+  const deleteKey = (keyId: string) => {
+    setKeys(prev => prev.filter(key => key.id !== keyId));
+  };
+
   const auditAsset = (assetId: string) => {
     setAssets(prevAssets => prevAssets.map(asset => {
       if (asset.id === assetId) {
@@ -67,6 +89,26 @@ const App: React.FC = () => {
     }));
   };
   
+  const selectedAsset = useMemo(() => {
+    return selectedAssetId ? assets.find(a => a.id === selectedAssetId) : null;
+  }, [assets, selectedAssetId]);
+
+  const handleGlobalScanSuccess = (decodedText: string) => {
+    setIsGlobalScannerOpen(false);
+    const assetToScan = assets.find(
+      asset => asset.id === decodedText ||
+               asset.serialNumber === decodedText ||
+               asset.identifiers?.barcode === decodedText ||
+               asset.identifiers?.qrCode === decodedText
+    );
+
+    if (assetToScan) {
+      setSelectedAssetId(assetToScan.id);
+    } else {
+      alert(`Ativo com código "${decodedText}" não encontrado.`);
+    }
+  };
+
   const assetsForUser = useMemo(() => {
     switch (currentUser.role) {
       case 'Admin':
@@ -121,17 +163,19 @@ const App: React.FC = () => {
       case 'DASHBOARD':
         return <DashboardView assets={filteredAssets} alerts={alerts} />;
       case 'FURNITURE':
-        return <AssetListView assets={getAssetsByCategory('Furniture')} category='Mobiliário e Equipamentos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} />;
+        return <AssetListView assets={getAssetsByCategory('Furniture')} category='Mobiliário e Equipamentos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} />;
       case 'IT':
-        return <AssetListView assets={getAssetsByCategory('IT')} category='Artigos de Informática' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} />;
+        return <AssetListView assets={getAssetsByCategory('IT')} category='Artigos de Informática' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} />;
       case 'VEHICLES':
-        return <AssetListView assets={getAssetsByCategory('Vehicle')} category='Frota de Veículos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} />;
-      case 'ADD_ASSET':
-        return <AddAssetView onAddAsset={addAsset} />;
+        return <AssetListView assets={getAssetsByCategory('Vehicle')} category='Frota de Veículos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} />;
+      case 'ADD_ITEM':
+        return <AddAssetView onAddAsset={addAsset} onAddKey={addKey} />;
       case 'INVENTORY':
         return <InventoryView assets={filteredAssets} onAuditAsset={auditAsset} />;
       case 'REPORTS':
         return <ReportsView assets={filteredAssets} />;
+      case 'KEY_MANAGEMENT':
+        return <KeyManagementView keys={keys} onUpdateKey={updateKey} onDeleteKey={deleteKey} currentUser={currentUser} />;
       default:
         return <DashboardView assets={filteredAssets} alerts={alerts} />;
     }
@@ -142,11 +186,26 @@ const App: React.FC = () => {
       <div className="flex h-screen bg-brand-light font-sans text-text-primary">
         <Sidebar currentView={view} setView={setView} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} alerts={alerts} currentUser={currentUser} users={mockUsers} onUserChange={handleSetCurrentUser} />
+          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} alerts={alerts} currentUser={currentUser} users={mockUsers} onUserChange={handleSetCurrentUser} onScanClick={() => setIsGlobalScannerOpen(true)} />
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light p-6 lg:p-8">
             {renderView()}
           </main>
         </div>
+        {selectedAsset && (
+          <AssetDetailsModal 
+            asset={selectedAsset} 
+            onClose={() => setSelectedAssetId(null)}
+            onUpdate={updateAsset}
+            onDelete={deleteAsset}
+            currentUser={currentUser}
+          />
+        )}
+        {isGlobalScannerOpen && (
+          <QRScannerModal
+            onClose={() => setIsGlobalScannerOpen(false)}
+            onScanSuccess={handleGlobalScanSuccess}
+          />
+        )}
       </div>
     </DndProvider>
   );

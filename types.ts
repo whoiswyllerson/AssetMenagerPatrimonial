@@ -2,12 +2,31 @@ export type AssetCategory = 'IT' | 'Furniture' | 'Vehicle';
 export type AssetStatus = 'Ativo' | 'Em Manutenção' | 'Sucateado' | 'Em Estoque';
 export type ContractType = 'Garantia' | 'Manutenção' | 'Seguro';
 export type UserRole = 'Admin' | 'Gerente de Frota' | 'Colaborador';
+export type KeyStatus = 'Disponível' | 'Em Uso' | 'Perdida';
 
 export interface User {
   id: string;
   name: string;
   role: UserRole;
   avatar: string;
+}
+
+export interface Key {
+  id: string;
+  name: string;
+  description: string;
+  rfid?: string;
+  status: KeyStatus;
+  location: {
+    storagePoint: string;
+    responsible: string; 
+  };
+  history: {
+    date: string;
+    user: string;
+    action: string;
+    details: string;
+  }[];
 }
 
 export interface Location {

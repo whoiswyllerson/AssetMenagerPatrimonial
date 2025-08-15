@@ -2,8 +2,9 @@
 import React, { useState, useMemo } from 'react';
 import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus, Contract, User } from '../../types';
 import { Card } from '../shared/Card';
-import { CheckInIcon, CheckOutIcon, DocumentIcon, ContractIcon } from '../shared/Icons';
+import { CheckInIcon, CheckOutIcon, DocumentIcon, TagIcon } from '../shared/Icons';
 import { CheckoutModal } from './CheckoutModal';
+import { LabelPrintModal } from './LabelPrintModal';
 
 interface AssetDetailsModalProps {
   asset: Asset;
@@ -65,6 +66,7 @@ const calculateDepreciation = (asset: Asset) => {
 export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onClose, onUpdate, onDelete, currentUser }) => {
     const [currentStatus, setCurrentStatus] = useState<AssetStatus>(asset.status);
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+    const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
     
     const depreciationInfo = useMemo(() => calculateDepreciation(asset), [asset]);
 
@@ -205,6 +207,12 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                 onConfirm={handleConfirmCheckout}
             />
         )}
+        {isLabelModalOpen && (
+            <LabelPrintModal
+                asset={asset}
+                onClose={() => setIsLabelModalOpen(false)}
+            />
+        )}
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={onClose}>
             <div className="bg-brand-light rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b flex justify-between items-center">
@@ -340,6 +348,13 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                 Check-in
                             </button>
                         )}
+                        <button 
+                            onClick={() => setIsLabelModalOpen(true)}
+                            className="flex items-center px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-colors font-medium text-sm"
+                        >
+                            <TagIcon className="w-5 h-5 mr-2" />
+                            Gerar Etiqueta
+                        </button>
                     </div>
                     <div className="flex items-center space-x-3">
                         {canDelete && (

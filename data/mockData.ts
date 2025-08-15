@@ -1,9 +1,56 @@
-import type { Asset, User } from '../types';
+
+import type { Asset, User, Key } from '../types';
 
 export const mockUsers: User[] = [
   { id: 'user-admin', name: 'Admin', role: 'Admin', avatar: 'https://i.pravatar.cc/150?u=admin' },
   { id: 'user-roberto', name: 'Roberto Lima', role: 'Gerente de Frota', avatar: 'https://i.pravatar.cc/150?u=roberto' },
   { id: 'user-ana', name: 'Ana Silva', role: 'Colaborador', avatar: 'https://i.pravatar.cc/150?u=ana' },
+];
+
+export const mockKeys: Key[] = [
+  {
+    id: 'CHV-001',
+    name: 'Chave do Almoxarifado',
+    description: 'Abre a porta principal do almoxarifado no térreo.',
+    rfid: 'RFID-A1B2C3D4',
+    status: 'Disponível',
+    location: {
+      storagePoint: 'Claviculário A-01',
+      responsible: 'N/A'
+    },
+    history: [{ date: '2024-01-15', user: 'Admin', action: 'Chave criada', details: 'Chave adicionada ao sistema.' }]
+  },
+  {
+    id: 'CHV-002',
+    name: 'Chave da Sala de Servidores',
+    description: 'Acesso restrito ao Data Center.',
+    rfid: 'RFID-E5F6G7H8',
+    status: 'Em Uso',
+    location: {
+      storagePoint: 'Claviculário A-02',
+      responsible: 'Equipe de TI'
+    },
+    history: [
+        { date: '2024-07-20', user: 'Admin', action: 'Check-out', details: 'Retirada pela Equipe de TI para manutenção.' },
+        { date: '2024-01-15', user: 'Admin', action: 'Chave criada', details: 'Chave adicionada ao sistema.' }
+    ]
+  },
+  {
+    id: 'CHV-003',
+    name: 'Chave da Porta da Frente',
+    description: 'Abre a porta de entrada principal do escritório.',
+    rfid: 'RFID-I9J0K1L2',
+    status: 'Perdida',
+    location: {
+      storagePoint: 'Claviculário B-05',
+      responsible: 'Ana Silva'
+    },
+    history: [
+      { date: '2024-06-10', user: 'Admin', action: 'Perda relatada', details: 'Usuária Ana Silva reportou a perda da chave.' },
+      { date: '2024-06-01', user: 'Admin', action: 'Check-out', details: 'Retirada por Ana Silva.' },
+      { date: '2024-02-01', user: 'Admin', action: 'Chave criada', details: 'Chave adicionada ao sistema.' }
+    ]
+  }
 ];
 
 export const initialAssets: Asset[] = [

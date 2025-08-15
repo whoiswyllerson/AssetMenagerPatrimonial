@@ -1,10 +1,37 @@
+
 import React, { useState } from 'react';
-import type { Asset, AssetCategory, Contract, ContractType } from '../../types';
-import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon } from '../shared/Icons';
+import type { Asset, AssetCategory, Contract, Key } from '../../types';
+import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon, AddAssetIcon, KeyIcon } from '../shared/Icons';
 
 interface AddAssetViewProps {
   onAddAsset: (asset: Omit<Asset, 'id' | 'history'>) => void;
+  onAddKey: (key: Omit<Key, 'id' | 'history'>) => void;
 }
+
+const TypeSelector: React.FC<{ onSelect: (type: 'asset' | 'key') => void; }> = ({ onSelect }) => {
+  const types = [
+    { name: 'asset', label: 'Ativo', icon: <AddAssetIcon className="w-10 h-10 mx-auto mb-2 text-brand-primary" /> },
+    { name: 'key', label: 'Chave Física', icon: <KeyIcon className="w-10 h-10 mx-auto mb-2 text-brand-primary" /> },
+  ];
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-4 text-center">O que você deseja cadastrar?</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {types.map(type => (
+          <div
+            key={type.name}
+            onClick={() => onSelect(type.name as 'asset' | 'key')}
+            className={`p-6 border-2 rounded-lg text-center cursor-pointer transition-all border-gray-200 hover:border-brand-accent hover:bg-brand-accent/5`}
+          >
+            {type.icon}
+            <span className="font-medium">{type.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const CategorySelector: React.FC<{
   selectedCategory: AssetCategory | null;
@@ -36,11 +63,13 @@ const CategorySelector: React.FC<{
 };
 
 
-export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
+export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey }) => {
+  const [formType, setFormType] = useState<'asset' | 'key' | null>(null);
   const [category, setCategory] = useState<AssetCategory | null>(null);
   const [formData, setFormData] = useState<Partial<Omit<Asset, 'id'>>>({});
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [keyData, setKeyData] = useState({ name: '', description: '', rfid: '' });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -122,10 +151,27 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
     } as Omit<Asset, 'id' | 'history'>;
 
     onAddAsset(completeAssetData);
+    setFormType(null);
     setCategory(null);
     setFormData({});
     setPhotoPreview(null);
     setDocumentFile(null);
+  };
+
+  const handleKeyInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setKeyData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleKeySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAddKey({
+      ...keyData,
+      status: 'Disponível',
+      location: { storagePoint: 'Claviculário Principal', responsible: 'N/A' },
+    });
+    setFormType(null);
+    setKeyData({ name: '', description: '', rfid: '' });
   };
 
   const getCategorySpecificDefaults = (cat: AssetCategory) => {
@@ -138,6 +184,26 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
   };
   
   const inputClasses = "w-full p-2 border border-gray-200 rounded bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all";
+
+  const renderKeyForm = () => (
+    <form onSubmit={handleKeySubmit} className="space-y-8">
+      <div>
+        <h2 className="text-xl font-semibold mb-4 text-center">Cadastrar Nova Chave</h2>
+        <div className="p-6 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 border-b pb-2">Identificação da Chave</h3>
+          <div className="grid grid-cols-1 gap-4">
+            <input name="name" placeholder="Nome da Chave (ex: Chave Sala 101)" onChange={handleKeyInputChange} value={keyData.name} className={inputClasses} required />
+            <input name="description" placeholder="Descrição (ex: Acesso ao almoxarifado)" onChange={handleKeyInputChange} value={keyData.description} className={inputClasses} required />
+            <input name="rfid" placeholder="Código RFID (Opcional)" onChange={handleKeyInputChange} value={keyData.rfid} className={inputClasses} />
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-end space-x-4">
+        <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Voltar</button>
+        <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent">Salvar Chave</button>
+      </div>
+    </form>
+  );
 
   const renderFormFields = () => {
     if (!category) return null;
@@ -258,9 +324,23 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset }) => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-brand-secondary">Cadastro de Ativos</h1>
+      <h1 className="text-3xl font-bold text-brand-secondary">Cadastro de Itens</h1>
       <div className="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto">
-        {!category ? <CategorySelector selectedCategory={category} onSelect={setCategory} /> : renderFormFields()}
+        {formType === null && <TypeSelector onSelect={setFormType} />}
+        
+        {formType === 'key' && renderKeyForm()}
+
+        {formType === 'asset' && !category && (
+          <div>
+            <CategorySelector selectedCategory={category} onSelect={setCategory} />
+            <div className="text-center mt-8">
+              <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Voltar</button>
+            </div>
+          </div>
+        )}
+
+        {formType === 'asset' && category && renderFormFields()}
+
       </div>
     </div>
   );

@@ -3,7 +3,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Asset, AssetCategory, AssetStatus } from '../../types';
 import { Card } from '../shared/Card';
-import { DocumentIcon } from '../shared/Icons';
+import { DocumentIcon, PrintIcon } from '../shared/Icons';
+import { BulkLabelPrintModal } from '../modals/BulkLabelPrintModal';
 
 interface ReportsViewProps {
   assets: Asset[];
@@ -25,6 +26,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
     status: 'all',
     location: '',
   });
+  const [isBulkLabelModalOpen, setIsBulkLabelModalOpen] = useState(false);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -112,90 +114,105 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
   const inputClasses = "w-full p-2 border border-gray-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all text-sm";
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-brand-secondary">Geração de Relatórios</h1>
+    <>
+      {isBulkLabelModalOpen && (
+        <BulkLabelPrintModal
+          assets={filteredAssets}
+          onClose={() => setIsBulkLabelModalOpen(false)}
+        />
+      )}
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-brand-secondary">Geração de Relatórios</h1>
 
-      <Card>
-        <h2 className="text-lg font-semibold text-brand-secondary mb-4 border-b pb-2">Filtros</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
-          <div>
-            <label className="text-xs font-medium text-text-secondary">Data de Aquisição (Início)</label>
-            <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={inputClasses}/>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-text-secondary">Data de Aquisição (Fim)</label>
-            <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={inputClasses}/>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-text-secondary">Categoria</label>
-            <select name="category" value={filters.category} onChange={handleFilterChange} className={inputClasses}>
-                <option value="all">Todas as Categorias</option>
-                <option value="IT">Informática</option>
-                <option value="Furniture">Mobiliário</option>
-                <option value="Vehicle">Veículos</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-text-secondary">Situação</label>
-            <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClasses}>
-                <option value="all">Todas as Situações</option>
-                <option value="Ativo">Ativo</option>
-                <option value="Em Manutenção">Em Manutenção</option>
-                <option value="Sucateado">Sucateado</option>
-                <option value="Em Estoque">Em Estoque</option>
-            </select>
-          </div>
-          <div className="lg:col-span-3">
-            <label className="text-xs font-medium text-text-secondary">Localização</label>
-            <input type="text" name="location" value={filters.location} onChange={handleFilterChange} className={inputClasses} placeholder="Pesquisar por Localização..." />
-          </div>
-          <button onClick={clearFilters} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium text-sm w-full">Limpar Filtros</button>
-        </div>
-      </Card>
-      
-      <Card>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
-            <h2 className="text-lg font-semibold text-brand-secondary">Resultados ({filteredAssets.length})</h2>
-            <div className="flex space-x-3 mt-4 sm:mt-0">
-                <button onClick={exportToCSV} className="flex items-center px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium text-sm">
-                    <DocumentIcon className="w-5 h-5 mr-2" />
-                    Exportar CSV
-                </button>
-                 <button onClick={exportToPDF} className="flex items-center px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium text-sm">
-                    <DocumentIcon className="w-5 h-5 mr-2" />
-                    Exportar PDF
-                </button>
+        <Card>
+          <h2 className="text-lg font-semibold text-brand-secondary mb-4 border-b pb-2">Filtros</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
+            <div>
+              <label className="text-xs font-medium text-text-secondary">Data de Aquisição (Início)</label>
+              <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={inputClasses}/>
             </div>
-        </div>
+            <div>
+              <label className="text-xs font-medium text-text-secondary">Data de Aquisição (Fim)</label>
+              <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={inputClasses}/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-text-secondary">Categoria</label>
+              <select name="category" value={filters.category} onChange={handleFilterChange} className={inputClasses}>
+                  <option value="all">Todas as Categorias</option>
+                  <option value="IT">Informática</option>
+                  <option value="Furniture">Mobiliário</option>
+                  <option value="Vehicle">Veículos</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-text-secondary">Situação</label>
+              <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClasses}>
+                  <option value="all">Todas as Situações</option>
+                  <option value="Ativo">Ativo</option>
+                  <option value="Em Manutenção">Em Manutenção</option>
+                  <option value="Sucateado">Sucateado</option>
+                  <option value="Em Estoque">Em Estoque</option>
+              </select>
+            </div>
+            <div className="lg:col-span-3">
+              <label className="text-xs font-medium text-text-secondary">Localização</label>
+              <input type="text" name="location" value={filters.location} onChange={handleFilterChange} className={inputClasses} placeholder="Pesquisar por Localização..." />
+            </div>
+            <button onClick={clearFilters} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium text-sm w-full">Limpar Filtros</button>
+          </div>
+        </Card>
+        
+        <Card>
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+              <h2 className="text-lg font-semibold text-brand-secondary">Resultados ({filteredAssets.length})</h2>
+              <div className="flex space-x-3 mt-4 sm:mt-0">
+                  <button 
+                      onClick={() => setIsBulkLabelModalOpen(true)}
+                      disabled={filteredAssets.length === 0}
+                      className="flex items-center px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-colors font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">
+                      <PrintIcon className="w-5 h-5 mr-2" />
+                      Imprimir Etiquetas
+                  </button>
+                  <button onClick={exportToCSV} className="flex items-center px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium text-sm">
+                      <DocumentIcon className="w-5 h-5 mr-2" />
+                      Exportar CSV
+                  </button>
+                   <button onClick={exportToPDF} className="flex items-center px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium text-sm">
+                      <DocumentIcon className="w-5 h-5 mr-2" />
+                      Exportar PDF
+                  </button>
+              </div>
+          </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-text-secondary">
-            <thead className="text-xs text-text-secondary uppercase bg-brand-light">
-              <tr>
-                <th scope="col" className="px-6 py-3">ID</th>
-                <th scope="col" className="px-6 py-3">Nome</th>
-                <th scope="col" className="px-6 py-3">Categoria</th>
-                <th scope="col" className="px-6 py-3">Status</th>
-                <th scope="col" className="px-6 py-3">Localização</th>
-                <th scope="col" className="px-6 py-3">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAssets.map(asset => (
-                <tr key={asset.id} className="bg-white hover:bg-gray-50 border-b">
-                  <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{asset.id}</td>
-                  <td className="px-6 py-3">{asset.name}</td>
-                  <td className="px-6 py-3">{asset.category}</td>
-                  <td className="px-6 py-3">{asset.status}</td>
-                  <td className="px-6 py-3">{asset.location.physicalLocation}</td>
-                  <td className="px-6 py-3">{asset.acquisition.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left text-text-secondary">
+              <thead className="text-xs text-text-secondary uppercase bg-brand-light">
+                <tr>
+                  <th scope="col" className="px-6 py-3">ID</th>
+                  <th scope="col" className="px-6 py-3">Nome</th>
+                  <th scope="col" className="px-6 py-3">Categoria</th>
+                  <th scope="col" className="px-6 py-3">Status</th>
+                  <th scope="col" className="px-6 py-3">Localização</th>
+                  <th scope="col" className="px-6 py-3">Valor</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {filteredAssets.length === 0 && <p className="p-6 text-center text-gray-500">Nenhum ativo encontrado com os filtros selecionados.</p>}
-        </div>
-      </Card>
-    </div>
+              </thead>
+              <tbody>
+                {filteredAssets.map(asset => (
+                  <tr key={asset.id} className="bg-white hover:bg-gray-50 border-b">
+                    <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{asset.id}</td>
+                    <td className="px-6 py-3">{asset.name}</td>
+                    <td className="px-6 py-3">{asset.category}</td>
+                    <td className="px-6 py-3">{asset.status}</td>
+                    <td className="px-6 py-3">{asset.location.physicalLocation}</td>
+                    <td className="px-6 py-3">{asset.acquisition.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredAssets.length === 0 && <p className="p-6 text-center text-gray-500">Nenhum ativo encontrado com os filtros selecionados.</p>}
+          </div>
+        </Card>
+      </div>
+    </>
   );
 };

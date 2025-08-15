@@ -3,7 +3,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Asset, AssetStatus, User } from '../../types';
-import { AssetDetailsModal } from '../modals/AssetDetailsModal';
 import { DragHandleIcon, DashboardIcon } from '../shared/Icons';
 
 interface AssetListViewProps {
@@ -12,6 +11,7 @@ interface AssetListViewProps {
   onUpdateAsset: (updatedAsset: Asset) => void;
   onDeleteAsset: (assetId: string) => void;
   currentUser: User;
+  onShowDetails: (assetId: string) => void;
 }
 
 const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
@@ -34,7 +34,7 @@ const DraggableRow: React.FC<{
   asset: Asset;
   index: number;
   moveRow: (dragIndex: number, hoverIndex: number) => void;
-  onViewDetails: (asset: Asset) => void;
+  onViewDetails: (assetId: string) => void;
   getStatusColor: (status: AssetStatus) => string;
 }> = ({ asset, index, moveRow, onViewDetails, getStatusColor }) => {
   const rowRef = useRef<HTMLTableRowElement>(null);
@@ -79,7 +79,7 @@ const DraggableRow: React.FC<{
       <td className="px-6 py-3">{asset.location.physicalLocation}</td>
       <td className="px-6 py-3">{asset.location.responsible}</td>
       <td className="px-6 py-3 text-right">
-        <button onClick={() => onViewDetails(asset)} className="font-medium text-brand-primary hover:underline">
+        <button onClick={() => onViewDetails(asset.id)} className="font-medium text-brand-primary hover:underline">
           Ver Detalhes
         </button>
       </td>
@@ -88,9 +88,8 @@ const DraggableRow: React.FC<{
 };
 
 
-export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset, currentUser }) => {
+export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset, currentUser, onShowDetails }) => {
   const [currentAssets, setCurrentAssets] = useState(assets);
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   
   React.useEffect(() => {
     setCurrentAssets(assets);
@@ -101,10 +100,6 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
     const value = assets.reduce((sum, asset) => sum + asset.acquisition.value, 0);
     return { totalCount: count, totalValue: value };
   }, [assets]);
-
-  const selectedAsset = useMemo(() => {
-    return selectedAssetId ? assets.find(a => a.id === selectedAssetId) : null;
-  }, [assets, selectedAssetId]);
 
   const moveRow = (dragIndex: number, hoverIndex: number) => {
     const dragRow = currentAssets[dragIndex];
@@ -162,7 +157,7 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
                   asset={asset} 
                   index={index} 
                   moveRow={moveRow} 
-                  onViewDetails={() => setSelectedAssetId(asset.id)} 
+                  onViewDetails={onShowDetails} 
                   getStatusColor={getStatusColor}
                 />
               ))}
@@ -171,15 +166,6 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
           {currentAssets.length === 0 && <p className="p-6 text-center text-gray-500">Nenhum ativo encontrado nesta categoria.</p>}
         </div>
       </div>
-      {selectedAsset && (
-        <AssetDetailsModal 
-          asset={selectedAsset} 
-          onClose={() => setSelectedAssetId(null)}
-          onUpdate={onUpdateAsset}
-          onDelete={onDeleteAsset}
-          currentUser={currentUser}
-        />
-      )}
     </div>
   );
 };
