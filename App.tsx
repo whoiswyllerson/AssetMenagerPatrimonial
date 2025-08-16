@@ -224,7 +224,7 @@ const App: React.FC = () => {
         <ToastContainer toasts={toasts} setToasts={setToasts} />
         <Sidebar currentView={view} setView={handleSetView} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} alerts={alerts} currentUser={currentUser} users={mockUsers} onUserChange={handleSetCurrentUser} onScanClick={() => setIsGlobalScannerOpen(true)} />
+          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} alerts={alerts} currentUser={currentUser} users={mockUsers} onUserChange={handleSetCurrentUser} onScanClick={() => setIsGlobalScannerOpen(true)} addToast={addToast} />
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light p-6 lg:p-8">
             {renderView()}
           </main>

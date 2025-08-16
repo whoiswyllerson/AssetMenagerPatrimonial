@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon, ChevronDownIcon, QrCodeIcon } from '../shared/Icons';
-import type { User } from '../../types';
+import type { User, ToastType } from '../../types';
 
 interface Alert {
     type: 'Maintenance' | 'License' | 'Contract';
@@ -17,6 +16,7 @@ interface HeaderProps {
     users: User[];
     onUserChange: (user: User) => void;
     onScanClick: () => void;
+    addToast: (message: string, type?: ToastType) => void;
 }
 
 const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
@@ -28,7 +28,7 @@ const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
     }
 }
 
-export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts, currentUser, users, onUserChange, onScanClick }) => {
+export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts, currentUser, users, onUserChange, onScanClick, addToast }) => {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const notificationsRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
     }, []);
 
     const handleSimulateEmail = (alert: Alert) => {
-        window.alert(`Simulação de E-mail:\n\nPara: ${alert.responsible}\nAssunto: Alerta de Ativo\n\nMensagem: ${alert.message}`);
+        addToast(`E-mail (simulado) para ${alert.responsible}: "${alert.message}"`, 'info');
     }
     
     return (

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Asset, AssetStatus, User } from '../../types';
@@ -16,7 +14,7 @@ interface AssetListViewProps {
 }
 
 const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
-  <div className="bg-white rounded-lg shadow-md p-4 flex items-center">
+  <div className="bg-white rounded-lg shadow-md p-4 flex items-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
     <div className="p-3 bg-brand-accent/10 rounded-full mr-4">
       {icon}
     </div>

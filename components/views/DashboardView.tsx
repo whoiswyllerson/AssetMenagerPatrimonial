@@ -141,7 +141,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
 
       {/* Charts and Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
           <h2 className="text-lg font-semibold text-brand-secondary mb-4">Ativos por Categoria</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -155,7 +155,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
           </ResponsiveContainer>
         </Card>
         
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <h2 className="text-lg font-semibold text-brand-secondary mb-4">Ativos por Situação</h2>
             <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={statusData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -169,7 +169,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
         </Card>
       </div>
 
-      <Card>
+      <Card className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         <h2 className="text-lg font-semibold text-brand-secondary mb-4">Depreciação Acumulada por Categoria</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={depreciationByCategoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -184,7 +184,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
         </ResponsiveContainer>
       </Card>
 
-      <Card>
+      <Card className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         <h2 className="text-lg font-semibold text-brand-secondary mb-4 flex items-center">
           <BellIcon className="w-6 h-6 mr-2 text-brand-primary" /> Alertas e Próximas Ações
         </h2>

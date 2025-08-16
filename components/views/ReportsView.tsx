@@ -198,7 +198,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
               </thead>
               <tbody>
                 {filteredAssets.map(asset => (
-                  <tr key={asset.id} className="bg-white hover:bg-gray-50 border-b">
+                  <tr key={asset.id} className="border-b transition-colors hover:bg-gray-100 odd:bg-white even:bg-brand-light">
                     <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{asset.id}</td>
                     <td className="px-6 py-3">{asset.name}</td>
                     <td className="px-6 py-3">{asset.category}</td>
