@@ -68,11 +68,11 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                 />
             </div>
             <div className="flex items-center space-x-6">
-                 <button onClick={onScanClick} title="Escanear Ativo" className="text-gray-500 hover:text-brand-primary">
+                 <button onClick={onScanClick} title="Escanear Ativo" className="text-gray-500 hover:text-brand-primary transform transition-transform active:scale-95">
                     <QrCodeIcon className="w-6 h-6"/>
                 </button>
                 <div className="relative" ref={notificationsRef}>
-                    <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="relative text-gray-500 hover:text-brand-primary">
+                    <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className={`relative text-gray-500 hover:text-brand-primary transform transition-transform duration-300 ${isNotificationsOpen ? 'rotate-[-20deg]' : ''}`}>
                         <BellIcon />
                         {alerts.length > 0 && (
                              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-status-red text-white text-xs">

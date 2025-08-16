@@ -3,6 +3,13 @@ export type AssetStatus = 'Ativo' | 'Em Manutenção' | 'Sucateado' | 'Em Estoqu
 export type ContractType = 'Garantia' | 'Manutenção' | 'Seguro';
 export type UserRole = 'Admin' | 'Gerente de Frota' | 'Colaborador';
 export type KeyStatus = 'Disponível' | 'Em Uso' | 'Perdida';
+export type ToastType = 'success' | 'error' | 'info';
+
+export interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+}
 
 export interface User {
   id: string;

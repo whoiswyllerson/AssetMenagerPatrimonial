@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { Asset } from '../../types';
+import type { Asset, ToastType } from '../../types';
 import { Card } from '../shared/Card';
 import { CheckCircleIcon, QrCodeIcon } from '../shared/Icons';
 import { QRScannerModal } from '../modals/QRScannerModal';
@@ -7,9 +7,10 @@ import { QRScannerModal } from '../modals/QRScannerModal';
 interface InventoryViewProps {
   assets: Asset[];
   onAuditAsset: (assetId: string) => void;
+  addToast: (message: string, type?: ToastType) => void;
 }
 
-export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAsset }) => {
+export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAsset, addToast }) => {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
@@ -36,9 +37,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
 
     if (assetToAudit) {
       onAuditAsset(assetToAudit.id);
-      alert(`Ativo "${assetToAudit.name}" auditado com sucesso!`);
+      // Replaced alert with toast
+      // alert(`Ativo "${assetToAudit.name}" auditado com sucesso!`);
     } else {
-      alert(`Ativo com código "${decodedText}" não encontrado.`);
+      addToast(`Ativo com código "${decodedText}" não encontrado.`, 'error');
     }
   };
 
@@ -74,7 +76,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
                 </div>
                 <button 
                     onClick={() => setIsScannerOpen(true)}
-                    className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-colors"
+                    className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all transform active:scale-95"
                 >
                     <QrCodeIcon className="w-5 h-5 mr-2"/>
                     Escanear Código do Ativo
@@ -117,7 +119,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
                       ) : (
                         <button
                           onClick={() => onAuditAsset(asset.id)}
-                          className="px-3 py-1 rounded-md bg-brand-primary text-white text-xs font-semibold hover:bg-brand-accent transition-colors disabled:bg-gray-300"
+                          className="px-3 py-1 rounded-md bg-brand-primary text-white text-xs font-semibold hover:bg-brand-accent transition-all transform active:scale-95 disabled:bg-gray-300"
                         >
                           Marcar como Encontrado
                         </button>

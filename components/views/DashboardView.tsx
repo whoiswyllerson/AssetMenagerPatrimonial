@@ -16,7 +16,7 @@ interface DashboardViewProps {
 }
 
 const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
-  <Card className="flex items-center p-4">
+  <Card className="flex items-center p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
     <div className="p-3 bg-brand-accent/10 rounded-full mr-4">
       {icon}
     </div>

@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import type { View } from '../../App';
 import type { User } from '../../types';
@@ -32,13 +33,12 @@ const NavItem: React.FC<{
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, currentUser }) => {
   const navItems: { view: View; label: string; icon: React.ReactNode }[] = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: <DashboardIcon className="w-5 h-5"/> },
+    { view: 'KEY_MANAGEMENT', label: 'Controle de Chaves', icon: <KeyIcon className="w-5 h-5"/> },
     { view: 'FURNITURE', label: 'Mobiliário', icon: <FurnitureIcon className="w-5 h-5"/> },
     { view: 'IT', label: 'Informática', icon: <ITIcon className="w-5 h-5"/> },
     { view: 'VEHICLES', label: 'Veículos', icon: <VehicleIcon className="w-5 h-5"/> },
     { view: 'INVENTORY', label: 'Inventário', icon: <InventoryIcon className="w-5 h-5"/> },
     { view: 'REPORTS', label: 'Relatórios', icon: <ReportsIcon className="w-5 h-5"/> },
-    { view: 'ADD_ITEM', label: 'Cadastrar Item', icon: <AddAssetIcon className="w-5 h-5"/> },
-    { view: 'KEY_MANAGEMENT', label: 'Controle de Chaves', icon: <KeyIcon className="w-5 h-5"/> },
   ];
 
   const visibleNavItems = useMemo(() => {
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, currentU
         }
         return true;
     });
-  }, [currentUser.role]);
+  }, [currentUser.role, navItems]);
 
   return (
     <nav className="w-64 bg-brand-secondary text-white flex flex-col p-4 shadow-lg">

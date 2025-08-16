@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import type { Asset, AssetCategory, Contract, Key } from '../../types';
 import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon, AddAssetIcon, KeyIcon } from '../shared/Icons';
 
 interface AddAssetViewProps {
   onAddAsset: (asset: Omit<Asset, 'id' | 'history'>) => void;
   onAddKey: (key: Omit<Key, 'id' | 'history'>) => void;
+  preselection: { itemType: 'asset' | 'key'; category?: AssetCategory } | null;
 }
 
 const TypeSelector: React.FC<{ onSelect: (type: 'asset' | 'key') => void; }> = ({ onSelect }) => {
@@ -63,13 +65,25 @@ const CategorySelector: React.FC<{
 };
 
 
-export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey }) => {
+export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey, preselection }) => {
   const [formType, setFormType] = useState<'asset' | 'key' | null>(null);
   const [category, setCategory] = useState<AssetCategory | null>(null);
   const [formData, setFormData] = useState<Partial<Omit<Asset, 'id'>>>({});
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [keyData, setKeyData] = useState({ name: '', description: '', rfid: '' });
+
+  useEffect(() => {
+    if (preselection) {
+      setFormType(preselection.itemType);
+      if (preselection.itemType === 'asset' && preselection.category) {
+        setCategory(preselection.category);
+      }
+    } else {
+      setFormType(null);
+      setCategory(null);
+    }
+  }, [preselection]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -199,8 +213,8 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
         </div>
       </div>
       <div className="flex justify-end space-x-4">
-        <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Voltar</button>
-        <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent">Salvar Chave</button>
+        <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
+        <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transform transition-transform active:scale-95">Salvar Chave</button>
       </div>
     </form>
   );
@@ -315,8 +329,8 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
         </div>
 
         <div className="flex justify-end space-x-4">
-            <button type="button" onClick={() => setCategory(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Voltar</button>
-            <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent">Salvar Ativo</button>
+            <button type="button" onClick={() => setCategory(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
+            <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transform transition-transform active:scale-95">Salvar Ativo</button>
         </div>
       </form>
     );
@@ -334,7 +348,7 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
           <div>
             <CategorySelector selectedCategory={category} onSelect={setCategory} />
             <div className="text-center mt-8">
-              <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Voltar</button>
+              <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
             </div>
           </div>
         )}

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Asset, AssetStatus, User } from '../../types';
-import { DragHandleIcon, DashboardIcon } from '../shared/Icons';
+import { DragHandleIcon, DashboardIcon, AddAssetIcon } from '../shared/Icons';
 
 interface AssetListViewProps {
   assets: Asset[];
@@ -12,6 +12,7 @@ interface AssetListViewProps {
   onDeleteAsset: (assetId: string) => void;
   currentUser: User;
   onShowDetails: (assetId: string) => void;
+  onNavigateToAddItem: () => void;
 }
 
 const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
@@ -88,7 +89,7 @@ const DraggableRow: React.FC<{
 };
 
 
-export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset, currentUser, onShowDetails }) => {
+export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset, currentUser, onShowDetails, onNavigateToAddItem }) => {
   const [currentAssets, setCurrentAssets] = useState(assets);
   
   React.useEffect(() => {
@@ -121,7 +122,18 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-brand-secondary">{category}</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-brand-secondary">{category}</h1>
+        {currentUser.role === 'Admin' && (
+          <button
+            onClick={onNavigateToAddItem}
+            className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all font-medium text-sm transform active:scale-95"
+          >
+            <AddAssetIcon className="w-5 h-5 mr-2" />
+            Cadastrar Item
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <KpiCard 

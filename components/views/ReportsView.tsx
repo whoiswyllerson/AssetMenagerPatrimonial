@@ -158,7 +158,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
               <label className="text-xs font-medium text-text-secondary">Localização</label>
               <input type="text" name="location" value={filters.location} onChange={handleFilterChange} className={inputClasses} placeholder="Pesquisar por Localização..." />
             </div>
-            <button onClick={clearFilters} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium text-sm w-full">Limpar Filtros</button>
+            <button onClick={clearFilters} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium text-sm w-full transform transition-transform active:scale-95">Limpar Filtros</button>
           </div>
         </Card>
         
@@ -169,15 +169,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
                   <button 
                       onClick={() => setIsBulkLabelModalOpen(true)}
                       disabled={filteredAssets.length === 0}
-                      className="flex items-center px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-colors font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">
+                      className="flex items-center px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-all font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed transform active:scale-95">
                       <PrintIcon className="w-5 h-5 mr-2" />
                       Imprimir Etiquetas
                   </button>
-                  <button onClick={exportToCSV} className="flex items-center px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium text-sm">
+                  <button onClick={exportToCSV} className="flex items-center px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all font-medium text-sm transform active:scale-95">
                       <DocumentIcon className="w-5 h-5 mr-2" />
                       Exportar CSV
                   </button>
-                   <button onClick={exportToPDF} className="flex items-center px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium text-sm">
+                   <button onClick={exportToPDF} className="flex items-center px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all font-medium text-sm transform active:scale-95">
                       <DocumentIcon className="w-5 h-5 mr-2" />
                       Exportar PDF
                   </button>

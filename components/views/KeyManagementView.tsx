@@ -1,14 +1,17 @@
 
+
 import React, { useState, useMemo, useRef } from 'react';
-import type { Key, KeyStatus, User } from '../../types';
+import type { Key, KeyStatus, User, ToastType } from '../../types';
 import { Card } from '../shared/Card';
-import { KeyIcon, CheckInIcon, CheckOutIcon, ExclamationTriangleIcon } from '../shared/Icons';
+import { KeyIcon, CheckInIcon, CheckOutIcon, ExclamationTriangleIcon, AddAssetIcon } from '../shared/Icons';
 
 interface KeyManagementViewProps {
     keys: Key[];
     onUpdateKey: (updatedKey: Key) => void;
     onDeleteKey: (keyId: string) => void;
     currentUser: User;
+    addToast: (message: string, type?: ToastType) => void;
+    onNavigateToAddKey: () => void;
 }
 
 const KeyForm: React.FC<{
@@ -55,21 +58,21 @@ const KeyForm: React.FC<{
                 className={inputClasses}
             />
             <div className="flex justify-end space-x-2">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-brand-primary text-white rounded">Salvar</button>
+                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 rounded transform transition-transform active:scale-95">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-primary text-white rounded transform transition-transform active:scale-95">Salvar</button>
             </div>
         </form>
     );
 };
 
 const KpiCard: React.FC<{ title: string; value: number; }> = ({ title, value }) => (
-  <Card className="text-center">
+  <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
     <p className="text-3xl font-bold text-brand-primary">{value}</p>
     <p className="text-sm text-text-secondary font-medium">{title}</p>
   </Card>
 );
 
-export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUpdateKey, onDeleteKey, currentUser }) => {
+export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUpdateKey, onDeleteKey, currentUser, addToast, onNavigateToAddKey }) => {
     const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
     const [rfidSearch, setRfidSearch] = useState('');
     const [foundKeyId, setFoundKeyId] = useState<string | null>(null);
@@ -89,12 +92,13 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
         const foundKey = keys.find(key => key.rfid === rfidSearch.trim());
         if (foundKey) {
             setFoundKeyId(foundKey.id);
+            addToast(`Chave "${foundKey.name}" localizada.`, 'success');
             const keyElement = keyRefs.current[foundKey.id];
             if (keyElement) {
                 keyElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         } else {
-            alert(`Nenhuma chave encontrada com o RFID: ${rfidSearch}`);
+            addToast(`Nenhuma chave encontrada com o RFID: ${rfidSearch}`, 'error');
             setFoundKeyId(null);
         }
     };
@@ -119,6 +123,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
                 updatedKey.location.responsible = responsible;
                 updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Check-out', details: `Retirada por ${responsible}.` });
                 onUpdateKey(updatedKey);
+                addToast(`Check-out da chave "${key.name}" para ${responsible}.`, 'info');
             }
         } else if (action === 'check-in') {
             if (window.confirm(`Confirmar a devolução da chave "${key.name}"?`)) {
@@ -127,12 +132,14 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
                 updatedKey.location.responsible = 'N/A';
                 updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Check-in', details: `Devolvida por ${previousResponsible}.` });
                 onUpdateKey(updatedKey);
+                addToast(`Chave "${key.name}" devolvida com sucesso.`, 'success');
             }
         } else if (action === 'report-lost') {
             if (window.confirm(`Tem certeza que deseja relatar a perda da chave "${key.name}"? Esta ação não pode ser desfeita.`)) {
                 updatedKey.status = 'Perdida';
                 updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Perda relatada', details: `Perda relatada pelo usuário.` });
                 onUpdateKey(updatedKey);
+                addToast(`Perda da chave "${key.name}" foi registrada.`, 'error');
             }
         }
     };
@@ -147,12 +154,24 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
             ]
         };
         onUpdateKey(updatedKey);
+        addToast(`Chave "${key.name}" atualizada com sucesso.`, 'success');
         setEditingKeyId(null);
     };
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-brand-secondary">Controle de Chaves Físicas</h1>
+             <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold text-brand-secondary">Controle de Chaves Físicas</h1>
+              {currentUser.role === 'Admin' && (
+                <button
+                    onClick={onNavigateToAddKey}
+                    className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all font-medium text-sm transform active:scale-95"
+                >
+                    <AddAssetIcon className="w-5 h-5 mr-2" />
+                    Cadastrar Chave
+                </button>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <KpiCard title="Total de Chaves" value={kpis.total} />
@@ -168,9 +187,9 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
                         value={rfidSearch}
                         onChange={e => setRfidSearch(e.target.value)}
                         placeholder="Digite o código RFID"
-                        className="flex-grow p-2 border border-gray-300 rounded"
+                        className="flex-grow p-2 border border-gray-200 rounded-lg bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all"
                     />
-                    <button onClick={handleRfidSearch} className="px-4 py-2 bg-brand-primary text-white rounded">Localizar</button>
+                    <button onClick={handleRfidSearch} className="px-4 py-2 bg-brand-primary text-white rounded-lg transform transition-transform active:scale-95">Localizar</button>
                 </div>
                 {foundKeyId && <p className="text-sm text-green-600 mt-2">Chave encontrada e destacada abaixo.</p>}
             </Card>
@@ -221,13 +240,13 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
                                     <td className="px-6 py-4 text-center">
                                         <div className="flex justify-center items-center space-x-2">
                                             {key.status === 'Disponível' && (
-                                                <button onClick={() => handleAction(key, 'check-out')} title="Check-out" className="p-2 text-gray-500 hover:text-brand-primary rounded-full hover:bg-gray-100"><CheckOutIcon /></button>
+                                                <button onClick={() => handleAction(key, 'check-out')} title="Check-out" className="p-2 text-gray-500 hover:text-brand-primary rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><CheckOutIcon /></button>
                                             )}
                                             {key.status === 'Em Uso' && (
-                                                <button onClick={() => handleAction(key, 'check-in')} title="Check-in" className="p-2 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100"><CheckInIcon /></button>
+                                                <button onClick={() => handleAction(key, 'check-in')} title="Check-in" className="p-2 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><CheckInIcon /></button>
                                             )}
                                             {key.status !== 'Perdida' && (
-                                                 <button onClick={() => handleAction(key, 'report-lost')} title="Relatar Perda" className="p-2 text-gray-500 hover:text-status-red rounded-full hover:bg-gray-100"><ExclamationTriangleIcon /></button>
+                                                 <button onClick={() => handleAction(key, 'report-lost')} title="Relatar Perda" className="p-2 text-gray-500 hover:text-status-red rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><ExclamationTriangleIcon /></button>
                                             )}
                                             <button onClick={() => setEditingKeyId(key.id)} className="text-xs font-medium text-blue-600 hover:underline">Editar</button>
                                         </div>

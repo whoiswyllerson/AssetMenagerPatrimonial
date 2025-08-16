@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Asset } from '../../types';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
@@ -12,6 +12,12 @@ interface LabelPrintModalProps {
 export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ asset, onClose }) => {
     const qrCodeRef = useRef<HTMLCanvasElement>(null);
     const barcodeRef = useRef<SVGSVGElement>(null);
+    const [show, setShow] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShow(true), 10);
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         const qrCodeValue = asset.identifiers?.qrCode || asset.id;
@@ -79,8 +85,8 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ asset, onClose
                     }
                 `}
             </style>
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[60] p-4 no-print" onClick={onClose}>
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className={`fixed inset-0 bg-black flex justify-center items-center z-[60] p-4 no-print transition-opacity duration-300 ${show ? 'bg-opacity-60' : 'bg-opacity-0'}`} onClick={onClose}>
+                <div className={`bg-white rounded-lg shadow-xl w-full max-w-lg transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
                     <div className="p-5 border-b flex justify-between items-center">
                         <h2 className="text-xl font-bold text-brand-secondary">Etiqueta de Ativo</h2>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-3xl font-light leading-none">&times;</button>
@@ -106,7 +112,7 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ asset, onClose
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm font-medium">Cancelar</button>
                         <button 
                             onClick={handlePrint}
-                            className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent text-sm font-medium"
+                            className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent text-sm font-medium transform transition-transform active:scale-95"
                         >
                             <PrintIcon className="mr-2"/>
                             Imprimir

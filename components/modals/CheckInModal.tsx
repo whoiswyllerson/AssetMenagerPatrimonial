@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
-interface CheckoutModalProps {
+interface CheckInModalProps {
   assetName: string;
-  currentLocation: string;
   onClose: () => void;
-  onConfirm: (responsible: string, location: string) => void;
+  onConfirm: (storageLocation: string) => void;
 }
 
-export const CheckoutModal: React.FC<CheckoutModalProps> = ({ assetName, currentLocation, onClose, onConfirm }) => {
-  const [responsible, setResponsible] = useState('');
-  const [location, setLocation] = useState(currentLocation);
+export const CheckInModal: React.FC<CheckInModalProps> = ({ assetName, onClose, onConfirm }) => {
+  const [location, setLocation] = useState('Em Estoque');
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -20,7 +18,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ assetName, current
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (location.trim()) {
-      onConfirm(responsible, location);
+      onConfirm(location);
     }
   };
 
@@ -31,38 +29,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ assetName, current
       <div className={`bg-white rounded-lg shadow-xl w-full max-w-md transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
           <div className="p-5 border-b">
-            <h2 className="text-xl font-bold text-brand-secondary">Realizar Check-out</h2>
+            <h2 className="text-xl font-bold text-brand-secondary">Realizar Check-in</h2>
             <p className="text-sm text-text-secondary">Ativo: {assetName}</p>
           </div>
           <div className="p-5 space-y-4">
             <div>
-              <label htmlFor="responsible" className="block text-sm font-medium text-text-primary mb-1">Nome do Responsável</label>
-              <input
-                id="responsible"
-                type="text"
-                value={responsible}
-                onChange={(e) => setResponsible(e.target.value)}
-                className={inputClasses}
-                placeholder="Ex: João da Silva (Opcional)"
-              />
-               <p className="text-xs text-text-secondary mt-1">Deixe em branco para designar a um local de uso comum.</p>
-            </div>
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-text-primary mb-1">Nova Localização</label>
+              <label htmlFor="location" className="block text-sm font-medium text-text-primary mb-1">Local de Armazenamento</label>
               <input
                 id="location"
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className={inputClasses}
-                placeholder="Ex: Sala 404, Mesa 02"
+                placeholder="Ex: Almoxarifado"
                 required
               />
             </div>
+             <p className="text-xs text-text-secondary">Informe para onde o ativo será devolvido.</p>
           </div>
           <div className="p-4 bg-gray-50 border-t flex justify-end space-x-3">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm font-medium transform transition-transform active:scale-95">Cancelar</button>
-            <button type="submit" className="px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent text-sm font-medium transform transition-transform active:scale-95">Confirmar Check-out</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 text-sm font-medium transform transition-transform active:scale-95">Confirmar Check-in</button>
           </div>
         </form>
       </div>

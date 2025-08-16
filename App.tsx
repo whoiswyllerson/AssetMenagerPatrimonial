@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import type { Asset, AssetCategory, User, Key } from './types';
+import type { Asset, AssetCategory, User, Key, Toast, ToastType } from './types';
 import { initialAssets, mockKeys, mockUsers } from './data/mockData';
 import { DashboardView } from './components/views/DashboardView';
 import { AssetListView } from './components/views/AssetListView';
@@ -14,8 +13,14 @@ import { ReportsView } from './components/views/ReportsView';
 import { AssetDetailsModal } from './components/modals/AssetDetailsModal';
 import { QRScannerModal } from './components/modals/QRScannerModal';
 import { KeyManagementView } from './components/views/KeyManagementView';
+import { ToastContainer } from './components/shared/Toast';
 
 export type View = 'DASHBOARD' | 'FURNITURE' | 'IT' | 'VEHICLES' | 'ADD_ITEM' | 'INVENTORY' | 'REPORTS' | 'KEY_MANAGEMENT';
+
+type AddItemPreselection = {
+  itemType: 'asset' | 'key';
+  category?: AssetCategory;
+} | null;
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('DASHBOARD');
@@ -25,10 +30,32 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User>(mockUsers[0]);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isGlobalScannerOpen, setIsGlobalScannerOpen] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [addItemPreselection, setAddItemPreselection] = useState<AddItemPreselection>(null);
+
+  const addToast = (message: string, type: ToastType = 'info') => {
+    const id = Date.now();
+    setToasts(prevToasts => [...prevToasts, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
+    }, 5000);
+  };
+
+  const handleSetView = (newView: View) => {
+    if (newView !== 'ADD_ITEM' && addItemPreselection) {
+      setAddItemPreselection(null);
+    }
+    setView(newView);
+  };
 
   const handleSetCurrentUser = (user: User) => {
     setCurrentUser(user);
-    setView('DASHBOARD');
+    handleSetView('DASHBOARD');
+  };
+
+  const handleNavigateToAddItem = (preselection: NonNullable<AddItemPreselection>) => {
+    setAddItemPreselection(preselection);
+    setView('ADD_ITEM');
   };
 
   const addAsset = (newAsset: Omit<Asset, 'id' | 'history'>) => {
@@ -38,6 +65,8 @@ const App: React.FC = () => {
       history: [{ date: new Date().toISOString().split('T')[0], user: currentUser.name, action: 'Ativo criado' }],
     } as Asset;
     setAssets(prevAssets => [...prevAssets, assetWithId]);
+    addToast(`Ativo "${assetWithId.name}" criado com sucesso!`, 'success');
+    setAddItemPreselection(null);
     switch(assetWithId.category) {
       case 'Furniture': setView('FURNITURE'); break;
       case 'IT': setView('IT'); break;
@@ -60,6 +89,8 @@ const App: React.FC = () => {
       history: [{ date: new Date().toISOString().split('T')[0], user: currentUser.name, action: 'Chave criada', details: `Chave "${newKey.name}" adicionada ao sistema.` }],
     };
     setKeys(prev => [...prev, keyWithId]);
+    addToast(`Chave "${keyWithId.name}" criada com sucesso!`, 'success');
+    setAddItemPreselection(null);
     setView('KEY_MANAGEMENT');
   };
   const updateKey = (updatedKey: Key) => {
@@ -70,8 +101,10 @@ const App: React.FC = () => {
   };
 
   const auditAsset = (assetId: string) => {
+    let assetName = '';
     setAssets(prevAssets => prevAssets.map(asset => {
       if (asset.id === assetId) {
+        assetName = asset.name;
         return {
           ...asset,
           lastAuditedDate: new Date().toISOString().split('T')[0],
@@ -87,6 +120,9 @@ const App: React.FC = () => {
       }
       return asset;
     }));
+    if (assetName) {
+      addToast(`Ativo "${assetName}" auditado com sucesso!`, 'success');
+    }
   };
   
   const selectedAsset = useMemo(() => {
@@ -104,8 +140,9 @@ const App: React.FC = () => {
 
     if (assetToScan) {
       setSelectedAssetId(assetToScan.id);
+      addToast(`Ativo "${assetToScan.name}" encontrado.`, 'success');
     } else {
-      alert(`Ativo com código "${decodedText}" não encontrado.`);
+      addToast(`Ativo com código "${decodedText}" não encontrado.`, 'error');
     }
   };
 
@@ -163,19 +200,19 @@ const App: React.FC = () => {
       case 'DASHBOARD':
         return <DashboardView assets={filteredAssets} alerts={alerts} />;
       case 'FURNITURE':
-        return <AssetListView assets={getAssetsByCategory('Furniture')} category='Mobiliário e Equipamentos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} />;
+        return <AssetListView assets={getAssetsByCategory('Furniture')} category='Mobiliário e Equipamentos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} onNavigateToAddItem={() => handleNavigateToAddItem({ itemType: 'asset', category: 'Furniture' })} />;
       case 'IT':
-        return <AssetListView assets={getAssetsByCategory('IT')} category='Artigos de Informática' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} />;
+        return <AssetListView assets={getAssetsByCategory('IT')} category='Artigos de Informática' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} onNavigateToAddItem={() => handleNavigateToAddItem({ itemType: 'asset', category: 'IT' })} />;
       case 'VEHICLES':
-        return <AssetListView assets={getAssetsByCategory('Vehicle')} category='Frota de Veículos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} />;
+        return <AssetListView assets={getAssetsByCategory('Vehicle')} category='Frota de Veículos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} onNavigateToAddItem={() => handleNavigateToAddItem({ itemType: 'asset', category: 'Vehicle' })} />;
       case 'ADD_ITEM':
-        return <AddAssetView onAddAsset={addAsset} onAddKey={addKey} />;
+        return <AddAssetView onAddAsset={addAsset} onAddKey={addKey} preselection={addItemPreselection} />;
       case 'INVENTORY':
-        return <InventoryView assets={filteredAssets} onAuditAsset={auditAsset} />;
+        return <InventoryView assets={filteredAssets} onAuditAsset={auditAsset} addToast={addToast} />;
       case 'REPORTS':
         return <ReportsView assets={filteredAssets} />;
       case 'KEY_MANAGEMENT':
-        return <KeyManagementView keys={keys} onUpdateKey={updateKey} onDeleteKey={deleteKey} currentUser={currentUser} />;
+        return <KeyManagementView keys={keys} onUpdateKey={updateKey} onDeleteKey={deleteKey} currentUser={currentUser} addToast={addToast} onNavigateToAddKey={() => handleNavigateToAddItem({ itemType: 'key' })} />;
       default:
         return <DashboardView assets={filteredAssets} alerts={alerts} />;
     }
@@ -184,7 +221,8 @@ const App: React.FC = () => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex h-screen bg-brand-light font-sans text-text-primary">
-        <Sidebar currentView={view} setView={setView} currentUser={currentUser} />
+        <ToastContainer toasts={toasts} setToasts={setToasts} />
+        <Sidebar currentView={view} setView={handleSetView} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} alerts={alerts} currentUser={currentUser} users={mockUsers} onUserChange={handleSetCurrentUser} onScanClick={() => setIsGlobalScannerOpen(true)} />
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light p-6 lg:p-8">
@@ -198,6 +236,7 @@ const App: React.FC = () => {
             onUpdate={updateAsset}
             onDelete={deleteAsset}
             currentUser={currentUser}
+            addToast={addToast}
           />
         )}
         {isGlobalScannerOpen && (

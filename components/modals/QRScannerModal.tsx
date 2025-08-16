@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface QRScannerModalProps {
@@ -9,7 +9,16 @@ interface QRScannerModalProps {
 const QR_READER_ID = "qr-reader";
 
 export const QRScannerModal: React.FC<QRScannerModalProps> = ({ onClose, onScanSuccess }) => {
+    const [show, setShow] = useState(false);
+
     useEffect(() => {
+        const timer = setTimeout(() => setShow(true), 10);
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        if (!show) return;
+
         const scanner = new Html5QrcodeScanner(
             QR_READER_ID,
             {
@@ -45,11 +54,11 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ onClose, onScanS
                  });
             }
         };
-    }, [onScanSuccess]);
+    }, [onScanSuccess, show]);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <div className={`fixed inset-0 bg-black flex justify-center items-center z-50 p-4 transition-opacity duration-300 ${show ? 'bg-opacity-75' : 'bg-opacity-0'}`} onClick={onClose}>
+            <div className={`bg-white rounded-lg shadow-xl w-full max-w-md transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
                 <div className="p-4 border-b flex justify-between items-center">
                     <h2 className="text-xl font-bold text-brand-secondary">Escanear Código do Ativo</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-3xl font-light leading-none">&times;</button>

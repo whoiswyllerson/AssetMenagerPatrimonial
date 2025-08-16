@@ -1,10 +1,10 @@
-
-import React, { useState, useMemo } from 'react';
-import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus, Contract, User } from '../../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import type { Asset, ITAsset, FurnitureAsset, VehicleAsset, AssetStatus, Contract, User, ToastType } from '../../types';
 import { Card } from '../shared/Card';
 import { CheckInIcon, CheckOutIcon, DocumentIcon, TagIcon } from '../shared/Icons';
 import { CheckoutModal } from './CheckoutModal';
 import { LabelPrintModal } from './LabelPrintModal';
+import { CheckInModal } from './CheckInModal';
 
 interface AssetDetailsModalProps {
   asset: Asset;
@@ -12,6 +12,7 @@ interface AssetDetailsModalProps {
   onUpdate: (updatedAsset: Asset) => void;
   onDelete: (assetId: string) => void;
   currentUser: User;
+  addToast: (message: string, type?: ToastType) => void;
 }
 
 const DetailSection: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => (
@@ -63,11 +64,23 @@ const calculateDepreciation = (asset: Asset) => {
     };
 };
 
-export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onClose, onUpdate, onDelete, currentUser }) => {
+export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onClose, onUpdate, onDelete, currentUser, addToast }) => {
     const [currentStatus, setCurrentStatus] = useState<AssetStatus>(asset.status);
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+    const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
     const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+    const [show, setShow] = useState(false);
     
+    useEffect(() => {
+        const timer = setTimeout(() => setShow(true), 10);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // FIX: Synchronize internal status state with asset prop to prevent stale UI
+    useEffect(() => {
+        setCurrentStatus(asset.status);
+    }, [asset.status]);
+
     const depreciationInfo = useMemo(() => calculateDepreciation(asset), [asset]);
 
     const canEdit = useMemo(() => {
@@ -94,59 +107,68 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
         ]
      };
       onUpdate(updatedAsset);
+      addToast(`Status de "${asset.name}" alterado para ${newStatus}.`, 'info');
     };
 
     const handleDelete = () => {
         if (window.confirm(`Tem certeza que deseja excluir o ativo "${asset.name}"? Esta ação não pode ser desfeita.`)) {
             onDelete(asset.id);
+            addToast(`Ativo "${asset.name}" excluído com sucesso.`, 'success');
             onClose();
         }
     };
 
     const handleCheckIn = () => {
-        if (window.confirm(`Confirmar o check-in (devolução) de "${asset.name}"?`)) {
-            const today = new Date().toISOString().split('T')[0];
-            const lastAllocation = [...asset.allocationHistory].reverse().find(a => a.endDate === null);
-            const newAllocationHistory = asset.allocationHistory.map(a => 
-                (a === lastAllocation) ? { ...a, endDate: today } : a
-            );
+        setIsCheckInModalOpen(true);
+    };
+    
+    const handleConfirmCheckIn = (storageLocation: string) => {
+        const today = new Date().toISOString().split('T')[0];
+        const lastAllocation = [...asset.allocationHistory].reverse().find(a => a.endDate === null);
+        const newAllocationHistory = asset.allocationHistory.map(a => 
+            (a === lastAllocation) ? { ...a, endDate: today } : a
+        );
 
-            const updatedAsset: Asset = {
-                ...asset,
-                status: 'Em Estoque',
-                location: {
-                    ...asset.location,
-                    responsible: 'N/A',
-                },
-                history: [
-                    ...asset.history,
-                    { date: today, user: currentUser.name, action: `Check-in realizado por ${asset.location.responsible}` }
-                ],
-                allocationHistory: newAllocationHistory,
-            };
-            onUpdate(updatedAsset);
-        }
+        const updatedAsset: Asset = {
+            ...asset,
+            status: 'Em Estoque',
+            location: {
+                physicalLocation: storageLocation,
+                responsible: 'N/A',
+            },
+            history: [
+                ...asset.history,
+                { date: today, user: currentUser.name, action: `Check-in realizado por ${asset.location.responsible}` }
+            ],
+            allocationHistory: newAllocationHistory,
+        };
+        onUpdate(updatedAsset);
+        addToast(`"${asset.name}" devolvido para ${storageLocation}.`, 'success');
+        setIsCheckInModalOpen(false);
     };
 
     const handleConfirmCheckout = (responsible: string, location: string) => {
         const today = new Date().toISOString().split('T')[0];
+        const responsibleName = responsible.trim() || `Uso Comum - ${location}`;
+        
         const updatedAsset: Asset = {
             ...asset,
             status: 'Ativo',
             location: {
                 physicalLocation: location,
-                responsible: responsible,
+                responsible: responsibleName,
             },
             history: [
                 ...asset.history,
-                { date: today, user: currentUser.name, action: `Check-out realizado para ${responsible}` }
+                { date: today, user: currentUser.name, action: `Check-out realizado para ${responsibleName}` }
             ],
             allocationHistory: [
                 ...asset.allocationHistory,
-                { user: responsible, startDate: today, endDate: null }
+                { user: responsibleName, startDate: today, endDate: null }
             ]
         };
         onUpdate(updatedAsset);
+        addToast(`Check-out de "${asset.name}" realizado para ${responsibleName}.`, 'success');
         setIsCheckoutModalOpen(false);
     };
 
@@ -199,6 +221,13 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
     
     return (
         <>
+        {isCheckInModalOpen && (
+            <CheckInModal 
+                assetName={asset.name}
+                onClose={() => setIsCheckInModalOpen(false)}
+                onConfirm={handleConfirmCheckIn}
+            />
+        )}
         {isCheckoutModalOpen && (
             <CheckoutModal 
                 assetName={asset.name}
@@ -213,8 +242,8 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                 onClose={() => setIsLabelModalOpen(false)}
             />
         )}
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-brand-light rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className={`fixed inset-0 bg-black flex justify-center items-center z-50 p-4 transition-opacity duration-300 ${show ? 'bg-opacity-50' : 'bg-opacity-0'}`} onClick={onClose}>
+            <div className={`bg-brand-light rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-brand-secondary">{asset.name}</h2>
@@ -231,7 +260,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                                 <DetailItem label="Nº de Série" value={asset.serialNumber} />
                                 {asset.identifiers?.rfid && <DetailItem label="Código RFID" value={asset.identifiers.rfid} />}
                                 <DetailItem label="Situação" value={
-                                  <select value={asset.status} onChange={handleStatusChange} disabled={!canEdit} className="p-1 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:bg-gray-100 disabled:text-gray-500">
+                                  <select value={currentStatus} onChange={handleStatusChange} disabled={!canEdit} className="p-1 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:bg-gray-100 disabled:text-gray-500">
                                     {['Ativo', 'Em Manutenção', 'Sucateado', 'Em Estoque'].map(s => <option key={s} value={s}>{s}</option>)}
                                   </select>
                                 } />
@@ -333,7 +362,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                          {canEdit && asset.status === 'Em Estoque' && (
                             <button 
                                 onClick={() => setIsCheckoutModalOpen(true)}
-                                className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-colors font-medium text-sm"
+                                className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all font-medium text-sm transform active:scale-95"
                             >
                                 <CheckOutIcon className="w-5 h-5 mr-2" />
                                 Check-out
@@ -342,7 +371,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                         {canEdit && asset.status === 'Ativo' && (
                             <button 
                                 onClick={handleCheckIn}
-                                className="flex items-center px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors font-medium text-sm"
+                                className="flex items-center px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all font-medium text-sm transform active:scale-95"
                             >
                                 <CheckInIcon className="w-5 h-5 mr-2" />
                                 Check-in
@@ -350,7 +379,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                         )}
                         <button 
                             onClick={() => setIsLabelModalOpen(true)}
-                            className="flex items-center px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-colors font-medium text-sm"
+                            className="flex items-center px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-all font-medium text-sm transform active:scale-95"
                         >
                             <TagIcon className="w-5 h-5 mr-2" />
                             Gerar Etiqueta
@@ -360,14 +389,14 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                         {canDelete && (
                             <button 
                                 onClick={handleDelete}
-                                className="px-4 py-2 rounded-lg bg-status-red text-white hover:bg-red-700 transition-colors text-sm font-medium"
+                                className="px-4 py-2 rounded-lg bg-status-red text-white hover:bg-red-700 transition-all text-sm font-medium transform active:scale-95"
                             >
                                 Excluir Ativo
                             </button>
                         )}
                         <button 
                             onClick={onClose} 
-                            className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors text-sm font-medium"
+                            className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-all text-sm font-medium transform active:scale-95"
                         >
                             Fechar
                         </button>
