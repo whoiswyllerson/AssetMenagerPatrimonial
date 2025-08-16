@@ -32,6 +32,8 @@ const App: React.FC = () => {
   const [isGlobalScannerOpen, setIsGlobalScannerOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [addItemPreselection, setAddItemPreselection] = useState<AddItemPreselection>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
   const addToast = (message: string, type: ToastType = 'info') => {
     const id = Date.now();
@@ -46,6 +48,7 @@ const App: React.FC = () => {
       setAddItemPreselection(null);
     }
     setView(newView);
+    setIsSidebarOpen(false); // Close sidebar on navigation
   };
 
   const handleSetCurrentUser = (user: User) => {
@@ -222,10 +225,26 @@ const App: React.FC = () => {
     <DndProvider backend={HTML5Backend}>
       <div className="flex h-screen bg-brand-light font-sans text-text-primary">
         <ToastContainer toasts={toasts} setToasts={setToasts} />
-        <Sidebar currentView={view} setView={handleSetView} currentUser={currentUser} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} alerts={alerts} currentUser={currentUser} users={mockUsers} onUserChange={handleSetCurrentUser} onScanClick={() => setIsGlobalScannerOpen(true)} addToast={addToast} />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light p-6 lg:p-8">
+        <Sidebar 
+          currentView={view} 
+          setView={handleSetView} 
+          currentUser={currentUser}
+          isOpen={isSidebarOpen}
+          setIsOpen={setIsSidebarOpen}
+        />
+        <div className="relative flex-1 flex flex-col overflow-hidden lg:ml-64">
+          <Header 
+            searchQuery={searchQuery} 
+            setSearchQuery={setSearchQuery} 
+            alerts={alerts} 
+            currentUser={currentUser} 
+            users={mockUsers} 
+            onUserChange={handleSetCurrentUser} 
+            onScanClick={() => setIsGlobalScannerOpen(true)} 
+            addToast={addToast}
+            onMenuClick={() => setIsSidebarOpen(true)}
+          />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light p-4 md:p-6 lg:p-8">
             {renderView()}
           </main>
         </div>

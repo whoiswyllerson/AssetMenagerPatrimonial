@@ -160,12 +160,12 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
 
     return (
         <div className="space-y-6">
-             <div className="flex justify-between items-center">
+             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <h1 className="text-3xl font-bold text-brand-secondary">Controle de Chaves Físicas</h1>
               {currentUser.role === 'Admin' && (
                 <button
                     onClick={onNavigateToAddKey}
-                    className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all font-medium text-sm transform active:scale-95"
+                    className="flex items-center justify-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all font-medium text-sm transform active:scale-95"
                 >
                     <AddAssetIcon className="w-5 h-5 mr-2" />
                     Cadastrar Chave
@@ -181,7 +181,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
 
             <Card>
                 <h2 className="text-lg font-semibold text-brand-secondary mb-4">Localizador RFID de Chaves</h2>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-stretch gap-2">
                     <input
                         type="text"
                         value={rfidSearch}

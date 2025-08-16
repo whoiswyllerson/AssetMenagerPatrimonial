@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon, ChevronDownIcon, QrCodeIcon } from '../shared/Icons';
+import { SearchIcon, BellIcon, ExclamationTriangleIcon, EmailIcon, ContractIcon, WrenchIcon, ChevronDownIcon, QrCodeIcon, MenuIcon } from '../shared/Icons';
 import type { User, ToastType } from '../../types';
 
 interface Alert {
@@ -17,6 +17,7 @@ interface HeaderProps {
     onUserChange: (user: User) => void;
     onScanClick: () => void;
     addToast: (message: string, type?: ToastType) => void;
+    onMenuClick: () => void;
 }
 
 const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
@@ -28,7 +29,7 @@ const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
     }
 }
 
-export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts, currentUser, users, onUserChange, onScanClick, addToast }) => {
+export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, alerts, currentUser, users, onUserChange, onScanClick, addToast, onMenuClick }) => {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const notificationsRef = useRef<HTMLDivElement>(null);
@@ -55,19 +56,24 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
     
     return (
         <header className="bg-white shadow-sm p-4 flex justify-between items-center z-20">
-            <div className="relative flex-1 max-w-xl">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <SearchIcon className="text-gray-400" />
+            <div className="flex items-center">
+                <button onClick={onMenuClick} className="lg:hidden text-gray-500 hover:text-brand-primary mr-4">
+                    <MenuIcon />
+                </button>
+                <div className="relative flex-1 max-w-xs sm:max-w-md xl:max-w-xl">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <SearchIcon className="text-gray-400" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Pesquisar por nome, ID ou localização..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-full bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all"
+                    />
                 </div>
-                <input
-                    type="text"
-                    placeholder="Pesquisar por nome, ID ou localização..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-full bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all"
-                />
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3 sm:space-x-6">
                  <button onClick={onScanClick} title="Escanear Ativo" className="text-gray-500 hover:text-brand-primary transform transition-transform active:scale-95">
                     <QrCodeIcon className="w-6 h-6"/>
                 </button>
@@ -81,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                         )}
                     </button>
                     {isNotificationsOpen && (
-                        <div className="absolute right-0 mt-3 w-96 bg-white rounded-lg shadow-xl border z-30">
+                        <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-lg shadow-xl border z-30">
                             <div className="p-3 border-b">
                                 <h3 className="font-semibold text-text-primary">Notificações</h3>
                             </div>
@@ -116,11 +122,11 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                             src={currentUser.avatar}
                             alt="User avatar"
                         />
-                        <div>
+                        <div className="hidden sm:block">
                             <p className="font-semibold text-sm text-text-primary text-left">{currentUser.name}</p>
                             <p className="text-xs text-text-secondary">{currentUser.role}</p>
                         </div>
-                        <ChevronDownIcon className="text-gray-500"/>
+                        <ChevronDownIcon className="text-gray-500 hidden sm:block"/>
                     </button>
                     {isUserMenuOpen && (
                          <div className="absolute right-0 mt-3 w-60 bg-white rounded-lg shadow-xl border z-30">

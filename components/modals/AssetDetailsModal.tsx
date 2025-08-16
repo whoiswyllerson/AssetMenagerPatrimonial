@@ -244,15 +244,15 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
         )}
         <div className={`fixed inset-0 bg-black flex justify-center items-center z-50 p-4 transition-opacity duration-300 ${show ? 'bg-opacity-50' : 'bg-opacity-0'}`} onClick={onClose}>
             <div className={`bg-brand-light rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b flex justify-between items-center">
+                <div className="p-4 sm:p-6 border-b flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-bold text-brand-secondary">{asset.name}</h2>
+                        <h2 className="text-xl md:text-2xl font-bold text-brand-secondary">{asset.name}</h2>
                         <p className="text-sm text-text-secondary">{asset.id} &bull; {asset.category}</p>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-3xl font-light leading-none">&times;</button>
                 </div>
                 
-                <div className="p-6 overflow-y-auto">
+                <div className="p-4 sm:p-6 overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                              <DetailSection title="Informações Gerais">
@@ -357,8 +357,8 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ asset, onC
                     </div>
                 </div>
 
-                 <div className="p-4 bg-white mt-auto border-t flex justify-between items-center">
-                    <div className="flex items-center space-x-3">
+                 <div className="p-4 bg-white mt-auto border-t flex flex-wrap justify-between items-center gap-3">
+                    <div className="flex items-center flex-wrap gap-3">
                          {canEdit && asset.status === 'Em Estoque' && (
                             <button 
                                 onClick={() => setIsCheckoutModalOpen(true)}

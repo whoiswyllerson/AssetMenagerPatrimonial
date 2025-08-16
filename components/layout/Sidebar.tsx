@@ -3,12 +3,14 @@
 import React, { useMemo } from 'react';
 import type { View } from '../../App';
 import type { User } from '../../types';
-import { DashboardIcon, FurnitureIcon, ITIcon, VehicleIcon, AddAssetIcon, InventoryIcon, ReportsIcon, KeyIcon } from '../shared/Icons';
+import { DashboardIcon, FurnitureIcon, ITIcon, VehicleIcon, InventoryIcon, ReportsIcon, KeyIcon, XIcon } from '../shared/Icons';
 
 interface SidebarProps {
   currentView: View;
   setView: (view: View) => void;
   currentUser: User;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
 const NavItem: React.FC<{
@@ -30,7 +32,7 @@ const NavItem: React.FC<{
   </li>
 );
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, currentUser }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, currentUser, isOpen, setIsOpen }) => {
   const navItems: { view: View; label: string; icon: React.ReactNode }[] = [
     { view: 'DASHBOARD', label: 'Dashboard', icon: <DashboardIcon className="w-5 h-5"/> },
     { view: 'KEY_MANAGEMENT', label: 'Controle de Chaves', icon: <KeyIcon className="w-5 h-5"/> },
@@ -63,27 +65,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, currentU
   }, [currentUser.role, navItems]);
 
   return (
-    <nav className="w-64 bg-brand-secondary text-white flex flex-col p-4 shadow-lg">
-      <div className="flex items-center mb-10 p-2">
-        <div className="bg-brand-accent p-2 rounded-lg">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+    <>
+      <nav 
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-brand-secondary text-white flex flex-col p-4 shadow-lg transition-transform transform duration-300 ease-in-out
+                   lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="flex items-center justify-between mb-10 p-2">
+          <div className="flex items-center">
+            <div className="bg-brand-accent p-2 rounded-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            </div>
+            <h1 className="text-xl font-bold ml-3">AssetManager</h1>
+          </div>
+          <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-300 hover:text-white">
+            <XIcon className="w-6 h-6" />
+          </button>
         </div>
-        <h1 className="text-xl font-bold ml-3">AssetManager</h1>
-      </div>
-      <ul className="flex-1">
-        {visibleNavItems.map(item => (
-          <NavItem
-            key={item.view}
-            icon={item.icon}
-            label={item.label}
-            isActive={currentView === item.view}
-            onClick={() => setView(item.view)}
-          />
-        ))}
-      </ul>
-      <div className="mt-auto p-2">
-        <p className="text-xs text-gray-400">&copy; 2024 AssetManager Pro</p>
-      </div>
-    </nav>
+        <ul className="flex-1">
+          {visibleNavItems.map(item => (
+            <NavItem
+              key={item.view}
+              icon={item.icon}
+              label={item.label}
+              isActive={currentView === item.view}
+              onClick={() => setView(item.view)}
+            />
+          ))}
+        </ul>
+        <div className="mt-auto p-2">
+          <p className="text-xs text-gray-400">&copy; 2024 AssetManager Pro</p>
+        </div>
+      </nav>
+      {isOpen && <div onClick={() => setIsOpen(false)} className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"></div>}
+    </>
   );
 };

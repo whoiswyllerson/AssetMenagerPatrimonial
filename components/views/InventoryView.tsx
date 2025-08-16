@@ -59,7 +59,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
 
       <Card>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <div>
                     <label htmlFor="location-filter" className="text-sm font-medium text-text-secondary mr-2">Filtrar por Localização:</label>
                     <select
@@ -82,7 +82,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
                     Escanear Código do Ativo
                 </button>
             </div>
-            <p className="text-sm text-text-secondary font-medium">
+            <p className="text-sm text-text-secondary font-medium flex-shrink-0 mt-3 sm:mt-0">
                 Exibindo {filteredAssets.length} de {assets.length} ativos.
             </p>
         </div>

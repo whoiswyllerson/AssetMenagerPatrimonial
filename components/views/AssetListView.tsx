@@ -120,12 +120,12 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <h1 className="text-3xl font-bold text-brand-secondary">{category}</h1>
         {currentUser.role === 'Admin' && (
           <button
             onClick={onNavigateToAddItem}
-            className="flex items-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all font-medium text-sm transform active:scale-95"
+            className="flex items-center justify-center px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transition-all font-medium text-sm transform active:scale-95"
           >
             <AddAssetIcon className="w-5 h-5 mr-2" />
             Cadastrar Item

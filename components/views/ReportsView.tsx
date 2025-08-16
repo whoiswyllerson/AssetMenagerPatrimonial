@@ -165,7 +165,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
         <Card>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
               <h2 className="text-lg font-semibold text-brand-secondary">Resultados ({filteredAssets.length})</h2>
-              <div className="flex space-x-3 mt-4 sm:mt-0">
+              <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
                   <button 
                       onClick={() => setIsBulkLabelModalOpen(true)}
                       disabled={filteredAssets.length === 0}
