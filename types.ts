@@ -101,6 +101,7 @@ interface BaseAsset {
     date: string;
     user: string;
     action: string;
+    details?: string;
   }[];
   lastAuditedDate?: string;
   photoUrl?: string;

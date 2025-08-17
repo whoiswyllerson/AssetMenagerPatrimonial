@@ -37,8 +37,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
 
     if (assetToAudit) {
       onAuditAsset(assetToAudit.id);
-      // Replaced alert with toast
-      // alert(`Ativo "${assetToAudit.name}" auditado com sucesso!`);
     } else {
       addToast(`Ativo com código "${decodedText}" não encontrado.`, 'error');
     }
@@ -98,10 +96,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ assets, onAuditAss
               </tr>
             </thead>
             <tbody>
-              {filteredAssets.map(asset => {
+              {filteredAssets.map((asset, index) => {
                 const wasAuditedToday = asset.lastAuditedDate === today;
+                const rowClass = wasAuditedToday 
+                  ? 'bg-green-50' 
+                  : `transition-colors duration-200 hover:bg-brand-accent/10 ${index % 2 === 0 ? 'bg-white' : 'bg-brand-light/60'}`;
                 return (
-                  <tr key={asset.id} className={`border-b transition-colors ${wasAuditedToday ? 'bg-green-50' : 'bg-white hover:bg-gray-50'}`}>
+                  <tr key={asset.id} className={`border-b ${rowClass}`}>
                     <td className="px-6 py-4 font-medium text-text-primary">
                       {asset.name}
                       <span className="block text-xs text-text-secondary">{asset.id}</span>

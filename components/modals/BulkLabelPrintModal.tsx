@@ -42,6 +42,7 @@ const Label: React.FC<{ asset: Asset }> = ({ asset }) => {
 
     return (
         <div className="p-2 border border-gray-300 bg-white break-inside-avoid-page">
+            <p className="text-[9px] text-center font-bold text-brand-secondary leading-tight">AssetManager Pro</p>
             <p className="text-xs font-bold text-center truncate leading-tight" title={asset.name}>{asset.name}</p>
             <p className="text-[10px] text-center text-gray-600 mb-1 leading-tight">{asset.id}</p>
             <div className="flex items-center justify-around">

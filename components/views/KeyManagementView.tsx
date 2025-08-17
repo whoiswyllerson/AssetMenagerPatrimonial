@@ -1,9 +1,9 @@
-
-
 import React, { useState, useMemo, useRef } from 'react';
 import type { Key, KeyStatus, User, ToastType } from '../../types';
 import { Card } from '../shared/Card';
 import { KeyIcon, CheckInIcon, CheckOutIcon, ExclamationTriangleIcon, AddAssetIcon } from '../shared/Icons';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
+import { PromptModal } from '../modals/PromptModal';
 
 interface KeyManagementViewProps {
     keys: Key[];
@@ -13,6 +13,14 @@ interface KeyManagementViewProps {
     addToast: (message: string, type?: ToastType) => void;
     onNavigateToAddKey: () => void;
 }
+
+type ModalState =
+  | { type: 'check-out'; key: Key }
+  | { type: 'check-in'; key: Key }
+  | { type: 'report-lost'; key: Key }
+  | { type: 'delete'; key: Key }
+  | null;
+
 
 const KeyForm: React.FC<{
     onSave: (key: Omit<Key, 'id' | 'history' | 'status' | 'location'>) => void;
@@ -77,6 +85,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
     const [rfidSearch, setRfidSearch] = useState('');
     const [foundKeyId, setFoundKeyId] = useState<string | null>(null);
     const keyRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+    const [modalState, setModalState] = useState<ModalState>(null);
 
     const kpis = useMemo(() => ({
         total: keys.length,
@@ -112,36 +121,54 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
         }
     };
 
-    const handleAction = (key: Key, action: 'check-in' | 'check-out' | 'report-lost') => {
+    const handleConfirmCheckout = (responsible: string) => {
+        if (!modalState || modalState.type !== 'check-out' || !responsible) return;
+        const { key } = modalState;
         const today = new Date().toISOString().split('T')[0];
-        let updatedKey = { ...key };
+        
+        const updatedKey = { ...key };
+        updatedKey.status = 'Em Uso';
+        updatedKey.location.responsible = responsible;
+        updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Check-out', details: `Retirada por ${responsible}.` });
+        onUpdateKey(updatedKey);
+        addToast(`Check-out da chave "${key.name}" para ${responsible}.`, 'info');
+        setModalState(null);
+    };
 
-        if (action === 'check-out') {
-            const responsible = window.prompt(`Quem está retirando a chave "${key.name}"?`);
-            if (responsible) {
-                updatedKey.status = 'Em Uso';
-                updatedKey.location.responsible = responsible;
-                updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Check-out', details: `Retirada por ${responsible}.` });
-                onUpdateKey(updatedKey);
-                addToast(`Check-out da chave "${key.name}" para ${responsible}.`, 'info');
-            }
-        } else if (action === 'check-in') {
-            if (window.confirm(`Confirmar a devolução da chave "${key.name}"?`)) {
-                updatedKey.status = 'Disponível';
-                const previousResponsible = updatedKey.location.responsible;
-                updatedKey.location.responsible = 'N/A';
-                updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Check-in', details: `Devolvida por ${previousResponsible}.` });
-                onUpdateKey(updatedKey);
-                addToast(`Chave "${key.name}" devolvida com sucesso.`, 'success');
-            }
-        } else if (action === 'report-lost') {
-            if (window.confirm(`Tem certeza que deseja relatar a perda da chave "${key.name}"? Esta ação não pode ser desfeita.`)) {
-                updatedKey.status = 'Perdida';
-                updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Perda relatada', details: `Perda relatada pelo usuário.` });
-                onUpdateKey(updatedKey);
-                addToast(`Perda da chave "${key.name}" foi registrada.`, 'error');
-            }
-        }
+    const handleConfirmCheckIn = () => {
+        if (!modalState || modalState.type !== 'check-in') return;
+        const { key } = modalState;
+        const today = new Date().toISOString().split('T')[0];
+        
+        let updatedKey = { ...key };
+        updatedKey.status = 'Disponível';
+        const previousResponsible = updatedKey.location.responsible;
+        updatedKey.location.responsible = 'N/A';
+        updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Check-in', details: `Devolvida por ${previousResponsible}.` });
+        onUpdateKey(updatedKey);
+        addToast(`Chave "${key.name}" devolvida com sucesso.`, 'success');
+        setModalState(null);
+    };
+
+    const handleConfirmReportLost = () => {
+        if (!modalState || modalState.type !== 'report-lost') return;
+        const { key } = modalState;
+        const today = new Date().toISOString().split('T')[0];
+
+        let updatedKey = { ...key };
+        updatedKey.status = 'Perdida';
+        updatedKey.history.unshift({ date: today, user: currentUser.name, action: 'Perda relatada', details: `Perda relatada pelo usuário.` });
+        onUpdateKey(updatedKey);
+        addToast(`Perda da chave "${key.name}" foi registrada.`, 'error');
+        setModalState(null);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!modalState || modalState.type !== 'delete') return;
+        const { key } = modalState;
+        onDeleteKey(key.id);
+        addToast(`Chave "${key.name}" excluída com sucesso.`, 'success');
+        setModalState(null);
     };
     
     const handleSaveUpdateKey = (key: Key, updatedData: Omit<Key, 'id' | 'history' | 'status' | 'location'>) => {
@@ -160,6 +187,44 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
 
     return (
         <div className="space-y-6">
+             {/* Modals */}
+            <PromptModal
+                isOpen={modalState?.type === 'check-out'}
+                onClose={() => setModalState(null)}
+                onConfirm={handleConfirmCheckout}
+                title="Realizar Check-out de Chave"
+                message={`Quem está retirando a chave "${modalState?.key.name}"?`}
+                label="Nome do Responsável"
+                placeholder="Ex: João da Silva"
+            />
+            <ConfirmationModal
+                isOpen={modalState?.type === 'check-in'}
+                onClose={() => setModalState(null)}
+                onConfirm={handleConfirmCheckIn}
+                title="Confirmar Check-in"
+                message={`Confirmar a devolução da chave "${modalState?.key.name}"?`}
+                confirmText="Confirmar Devolução"
+                confirmButtonClass="bg-blue-500 text-white hover:bg-blue-600"
+            />
+            <ConfirmationModal
+                isOpen={modalState?.type === 'report-lost'}
+                onClose={() => setModalState(null)}
+                onConfirm={handleConfirmReportLost}
+                title="Relatar Perda de Chave"
+                message={`Tem certeza que deseja relatar a perda da chave "${modalState?.key.name}"?`}
+                confirmText="Sim, Relatar Perda"
+                confirmButtonClass="bg-status-red text-white hover:bg-red-700"
+            />
+             <ConfirmationModal
+                isOpen={modalState?.type === 'delete'}
+                onClose={() => setModalState(null)}
+                onConfirm={handleConfirmDelete}
+                title="Excluir Chave"
+                message={`Tem certeza que deseja excluir a chave "${modalState?.key.name}"? Esta ação é irreversível.`}
+                confirmText="Excluir"
+                confirmButtonClass="bg-status-red text-white hover:bg-red-700"
+            />
+
              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <h1 className="text-3xl font-bold text-brand-secondary">Controle de Chaves Físicas</h1>
               {currentUser.role === 'Admin' && (
@@ -210,11 +275,13 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
                       </tr>
                     </thead>
                     <tbody>
-                      {keys.map(key => (
+                      {keys.map((key, index) => (
                         <tr
                             key={key.id}
                             ref={el => { keyRefs.current[key.id] = el; }}
-                            className={`border-b transition-all duration-500 ${foundKeyId === key.id ? 'bg-yellow-100 ring-2 ring-yellow-400' : 'bg-white hover:bg-gray-50'}`}
+                            className={`border-b transition-colors duration-200 hover:bg-brand-accent/10
+                                ${foundKeyId === key.id ? 'bg-yellow-100 ring-2 ring-yellow-400' : (index % 2 === 0 ? 'bg-white' : 'bg-brand-light/60')}
+                            `}
                         >
                             {editingKeyId === key.id ? (
                                 <td colSpan={4} className="p-0">
@@ -240,15 +307,21 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({ keys, onUp
                                     <td className="px-6 py-4 text-center">
                                         <div className="flex justify-center items-center space-x-2">
                                             {key.status === 'Disponível' && (
-                                                <button onClick={() => handleAction(key, 'check-out')} title="Check-out" className="p-2 text-gray-500 hover:text-brand-primary rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><CheckOutIcon /></button>
+                                                <button onClick={() => setModalState({ type: 'check-out', key })} title="Check-out" className="p-2 text-gray-500 hover:text-brand-primary rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><CheckOutIcon /></button>
                                             )}
                                             {key.status === 'Em Uso' && (
-                                                <button onClick={() => handleAction(key, 'check-in')} title="Check-in" className="p-2 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><CheckInIcon /></button>
+                                                <button onClick={() => setModalState({ type: 'check-in', key })} title="Check-in" className="p-2 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><CheckInIcon /></button>
                                             )}
                                             {key.status !== 'Perdida' && (
-                                                 <button onClick={() => handleAction(key, 'report-lost')} title="Relatar Perda" className="p-2 text-gray-500 hover:text-status-red rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><ExclamationTriangleIcon /></button>
+                                                 <button onClick={() => setModalState({ type: 'report-lost', key })} title="Relatar Perda" className="p-2 text-gray-500 hover:text-status-red rounded-full hover:bg-gray-100 transform transition-transform active:scale-95"><ExclamationTriangleIcon /></button>
                                             )}
-                                            <button onClick={() => setEditingKeyId(key.id)} className="text-xs font-medium text-blue-600 hover:underline">Editar</button>
+                                            {currentUser.role === 'Admin' && (
+                                                <>
+                                                    <div className="h-4 border-l border-gray-300 mx-1"></div>
+                                                    <button onClick={() => setEditingKeyId(key.id)} className="text-xs font-medium text-blue-600 hover:underline transform transition-transform active:scale-95 inline-block">Editar</button>
+                                                    <button onClick={() => setModalState({ type: 'delete', key })} className="text-xs font-medium text-status-red hover:underline transform transition-transform active:scale-95 inline-block">Excluir</button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </>

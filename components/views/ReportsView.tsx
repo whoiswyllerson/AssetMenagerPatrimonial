@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Asset, AssetCategory, AssetStatus } from '../../types';
 import { Card } from '../shared/Card';
-import { DocumentIcon, PrintIcon } from '../shared/Icons';
+import { DocumentIcon, PrintIcon, SpinnerIcon } from '../shared/Icons';
 import { BulkLabelPrintModal } from '../modals/BulkLabelPrintModal';
 
 interface ReportsViewProps {
@@ -27,6 +27,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
     location: '',
   });
   const [isBulkLabelModalOpen, setIsBulkLabelModalOpen] = useState(false);
+  const [exportingType, setExportingType] = useState<'csv' | 'pdf' | null>(null);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -111,6 +112,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
     doc.save(`relatorio_ativos_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  const handleExport = (type: 'csv' | 'pdf') => {
+    if (exportingType) return;
+    setExportingType(type);
+    setTimeout(() => {
+        if (type === 'csv') {
+            exportToCSV();
+        } else {
+            exportToPDF();
+        }
+        setExportingType(null);
+    }, 500);
+  };
+
   const inputClasses = "w-full p-2 border border-gray-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all text-sm";
 
   return (
@@ -173,13 +187,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
                       <PrintIcon className="w-5 h-5 mr-2" />
                       Imprimir Etiquetas
                   </button>
-                  <button onClick={exportToCSV} className="flex items-center px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all font-medium text-sm transform active:scale-95">
-                      <DocumentIcon className="w-5 h-5 mr-2" />
-                      Exportar CSV
+                  <button onClick={() => handleExport('csv')} disabled={exportingType !== null} className="flex items-center justify-center w-36 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all font-medium text-sm disabled:bg-gray-400 transform active:scale-95">
+                      {exportingType === 'csv' ? <SpinnerIcon className="w-5 h-5" /> : <><DocumentIcon className="w-5 h-5 mr-2" /> Exportar CSV</>}
                   </button>
-                   <button onClick={exportToPDF} className="flex items-center px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all font-medium text-sm transform active:scale-95">
-                      <DocumentIcon className="w-5 h-5 mr-2" />
-                      Exportar PDF
+                   <button onClick={() => handleExport('pdf')} disabled={exportingType !== null} className="flex items-center justify-center w-36 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all font-medium text-sm disabled:bg-gray-400 transform active:scale-95">
+                      {exportingType === 'pdf' ? <SpinnerIcon className="w-5 h-5" /> : <><DocumentIcon className="w-5 h-5 mr-2" /> Exportar PDF</>}
                   </button>
               </div>
           </div>
@@ -198,7 +210,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ assets }) => {
               </thead>
               <tbody>
                 {filteredAssets.map(asset => (
-                  <tr key={asset.id} className="border-b transition-colors hover:bg-gray-100 odd:bg-white even:bg-brand-light">
+                  <tr key={asset.id} className="border-b transition-colors duration-200 hover:bg-brand-accent/10 odd:bg-white even:bg-brand-light">
                     <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{asset.id}</td>
                     <td className="px-6 py-3">{asset.name}</td>
                     <td className="px-6 py-3">{asset.category}</td>

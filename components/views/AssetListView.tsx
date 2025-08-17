@@ -1,7 +1,6 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
+import React, { useState, useMemo } from 'react';
 import type { Asset, AssetStatus, User } from '../../types';
-import { DragHandleIcon, DashboardIcon, AddAssetIcon } from '../shared/Icons';
+import { DashboardIcon, AddAssetIcon, SearchIcon } from '../shared/Icons';
 
 interface AssetListViewProps {
   assets: Asset[];
@@ -25,49 +24,13 @@ const KpiCard: React.FC<{ title: string; value: string | number; icon: React.Rea
   </div>
 );
 
-const ItemTypes = {
-  ROW: 'row',
-};
-
-const DraggableRow: React.FC<{
+const AssetRow: React.FC<{
   asset: Asset;
-  index: number;
-  moveRow: (dragIndex: number, hoverIndex: number) => void;
   onViewDetails: (assetId: string) => void;
   getStatusColor: (status: AssetStatus) => string;
-}> = ({ asset, index, moveRow, onViewDetails, getStatusColor }) => {
-  const rowRef = useRef<HTMLTableRowElement>(null);
-  const dragHandleRef = useRef<HTMLTableCellElement>(null);
-
-  const [, drop] = useDrop({
-    accept: ItemTypes.ROW,
-    hover(item: { index: number }, monitor) {
-      if (!rowRef.current) return;
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) return;
-      moveRow(dragIndex, hoverIndex);
-      item.index = hoverIndex;
-    },
-  });
-
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: ItemTypes.ROW,
-    item: { index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  drag(dragHandleRef);
-  drop(rowRef);
-  preview(rowRef);
-
+}> = ({ asset, onViewDetails, getStatusColor }) => {
   return (
-    <tr ref={rowRef} style={{ opacity: isDragging ? 0.5 : 1 }} className="bg-white hover:bg-gray-50 border-b">
-      <td ref={dragHandleRef} className="pl-4 pr-2 py-3 cursor-move text-gray-400 hover:text-gray-800">
-        <DragHandleIcon />
-      </td>
+    <tr className="border-b transition-colors duration-200 hover:bg-brand-accent/10 odd:bg-white even:bg-brand-light/60">
       <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{asset.id}</td>
       <td className="px-6 py-3">{asset.name}</td>
       <td className="px-6 py-3">
@@ -78,7 +41,10 @@ const DraggableRow: React.FC<{
       <td className="px-6 py-3">{asset.location.physicalLocation}</td>
       <td className="px-6 py-3">{asset.location.responsible}</td>
       <td className="px-6 py-3 text-right">
-        <button onClick={() => onViewDetails(asset.id)} className="font-medium text-brand-primary hover:underline">
+        <button 
+          onClick={() => onViewDetails(asset.id)} 
+          className="font-medium text-brand-primary hover:underline transform transition-transform active:scale-95 inline-block"
+        >
           Ver Detalhes
         </button>
       </td>
@@ -88,25 +54,22 @@ const DraggableRow: React.FC<{
 
 
 export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, onUpdateAsset, onDeleteAsset, currentUser, onShowDetails, onNavigateToAddItem }) => {
-  const [currentAssets, setCurrentAssets] = useState(assets);
+  const [statusFilter, setStatusFilter] = useState<AssetStatus | 'all'>('all');
+  const [responsibleFilter, setResponsibleFilter] = useState('');
+
+  const filteredAssets = useMemo(() => {
+    return assets.filter(asset => {
+        const statusMatch = statusFilter === 'all' || asset.status === statusFilter;
+        const responsibleMatch = responsibleFilter === '' || asset.location.responsible.toLowerCase().includes(responsibleFilter.toLowerCase());
+        return statusMatch && responsibleMatch;
+    });
+  }, [assets, statusFilter, responsibleFilter]);
   
-  React.useEffect(() => {
-    setCurrentAssets(assets);
-  }, [assets]);
-
   const { totalCount, totalValue } = useMemo(() => {
-    const count = assets.length;
-    const value = assets.reduce((sum, asset) => sum + asset.acquisition.value, 0);
+    const count = filteredAssets.length;
+    const value = filteredAssets.reduce((sum, asset) => sum + asset.acquisition.value, 0);
     return { totalCount: count, totalValue: value };
-  }, [assets]);
-
-  const moveRow = (dragIndex: number, hoverIndex: number) => {
-    const dragRow = currentAssets[dragIndex];
-    const newAssets = [...currentAssets];
-    newAssets.splice(dragIndex, 1);
-    newAssets.splice(hoverIndex, 0, dragRow);
-    setCurrentAssets(newAssets);
-  };
+  }, [filteredAssets]);
 
   const getStatusColor = (status: AssetStatus) => {
     switch (status) {
@@ -117,6 +80,9 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const inputClasses = "w-full p-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all text-sm";
+  const allStatuses: AssetStatus[] = ['Ativo', 'Em Manutenção', 'Sucateado', 'Em Estoque'];
 
   return (
     <div className="space-y-6">
@@ -135,15 +101,42 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <KpiCard 
-          title="Total de Itens" 
+          title="Total de Itens (Filtrado)" 
           value={totalCount} 
           icon={<DashboardIcon className="h-6 w-6 text-brand-primary" />} 
         />
         <KpiCard 
-          title="Valor Total em Ativos" 
+          title="Valor em Ativos (Filtrado)" 
           value={totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} 
           icon={<span className="text-xl font-bold text-brand-primary h-6 w-6 flex items-center justify-center">R$</span>} 
         />
+      </div>
+
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="text-xs font-medium text-text-secondary">Filtrar por Situação</label>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as AssetStatus | 'all')} className={inputClasses}>
+              <option value="all">Todas as Situações</option>
+              {allStatuses.map(status => <option key={status} value={status}>{status}</option>)}
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-xs font-medium text-text-secondary">Filtrar por Responsável</label>
+            <div className="relative">
+              <input 
+                type="text" 
+                value={responsibleFilter} 
+                onChange={e => setResponsibleFilter(e.target.value)} 
+                placeholder="Digite o nome do responsável..." 
+                className={`${inputClasses} pl-10`}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon className="text-gray-400" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -151,7 +144,6 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
           <table className="w-full text-sm text-left text-text-secondary">
             <thead className="text-xs text-text-secondary uppercase bg-brand-light">
               <tr>
-                <th scope="col" className="p-4"></th>
                 <th scope="col" className="px-6 py-3">ID</th>
                 <th scope="col" className="px-6 py-3">Nome</th>
                 <th scope="col" className="px-6 py-3">Situação</th>
@@ -161,19 +153,17 @@ export const AssetListView: React.FC<AssetListViewProps> = ({ assets, category, 
               </tr>
             </thead>
             <tbody>
-              {currentAssets.map((asset, index) => (
-                <DraggableRow 
+              {filteredAssets.map((asset) => (
+                <AssetRow 
                   key={asset.id} 
                   asset={asset} 
-                  index={index} 
-                  moveRow={moveRow} 
                   onViewDetails={onShowDetails} 
                   getStatusColor={getStatusColor}
                 />
               ))}
             </tbody>
           </table>
-          {currentAssets.length === 0 && <p className="p-6 text-center text-gray-500">Nenhum ativo encontrado nesta categoria.</p>}
+          {filteredAssets.length === 0 && <p className="p-6 text-center text-gray-500">Nenhum ativo encontrado com os filtros aplicados.</p>}
         </div>
       </div>
     </div>

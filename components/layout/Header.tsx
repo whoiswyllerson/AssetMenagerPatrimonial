@@ -86,34 +86,32 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                              </span>
                         )}
                     </button>
-                    {isNotificationsOpen && (
-                        <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-lg shadow-xl border z-30">
-                            <div className="p-3 border-b">
-                                <h3 className="font-semibold text-text-primary">Notificações</h3>
-                            </div>
-                            <div className="max-h-96 overflow-y-auto">
-                                {alerts.length > 0 ? (
-                                    alerts.map((alert, index) => (
-                                        <div key={index} className="flex items-start p-3 hover:bg-gray-50 border-b last:border-b-0">
-                                            <AlertIcon type={alert.type} />
-                                            <div className="flex-1">
-                                                <p className="text-sm text-text-secondary">{alert.message}</p>
-                                                <button 
-                                                    onClick={() => handleSimulateEmail(alert)} 
-                                                    className="text-xs text-brand-primary hover:underline mt-2 flex items-center"
-                                                >
-                                                    <EmailIcon className="mr-1"/>
-                                                    Simular Envio de E-mail para {alert.responsible}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-center text-sm text-text-secondary p-4">Nenhuma notificação.</p>
-                                )}
-                            </div>
+                    <div className={`absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-lg shadow-lg border z-30 origin-top-right transition-all duration-200 ease-out ${isNotificationsOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                        <div className="p-3 border-b">
+                            <h3 className="font-semibold text-text-primary">Notificações</h3>
                         </div>
-                    )}
+                        <div className="max-h-96 overflow-y-auto">
+                            {alerts.length > 0 ? (
+                                alerts.map((alert, index) => (
+                                    <div key={index} className="flex items-start p-3 hover:bg-gray-50 border-b last:border-b-0">
+                                        <AlertIcon type={alert.type} />
+                                        <div className="flex-1">
+                                            <p className="text-sm text-text-secondary">{alert.message}</p>
+                                            <button 
+                                                onClick={() => handleSimulateEmail(alert)} 
+                                                className="text-xs text-brand-primary hover:underline mt-2 flex items-center"
+                                            >
+                                                <EmailIcon className="mr-1"/>
+                                                Simular Envio de E-mail para {alert.responsible}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-sm text-text-secondary p-4">Nenhuma notificação.</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
                 <div className="relative" ref={userMenuRef}>
                     <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center space-x-3 cursor-pointer">
@@ -128,28 +126,26 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, ale
                         </div>
                         <ChevronDownIcon className="text-gray-500 hidden sm:block"/>
                     </button>
-                    {isUserMenuOpen && (
-                         <div className="absolute right-0 mt-3 w-60 bg-white rounded-lg shadow-xl border z-30">
-                            <div className="p-2 border-b">
-                                <h3 className="font-semibold text-sm text-text-primary px-2">Trocar Usuário (Simulação)</h3>
-                            </div>
-                            <div className="py-1">
-                                {users.map(user => (
-                                    <a
-                                        key={user.id}
-                                        onClick={() => { onUserChange(user); setIsUserMenuOpen(false); }}
-                                        className={`flex items-center px-4 py-2 text-sm text-text-primary hover:bg-gray-100 cursor-pointer ${currentUser.id === user.id ? 'font-bold bg-gray-100' : ''}`}
-                                    >
-                                        <img src={user.avatar} className="h-8 w-8 rounded-full mr-3" />
-                                        <div>
-                                            <p>{user.name}</p>
-                                            <p className="text-xs text-text-secondary">{user.role}</p>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
+                     <div className={`absolute right-0 mt-3 w-60 bg-white rounded-lg shadow-lg border z-30 origin-top-right transition-all duration-200 ease-out ${isUserMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                        <div className="p-2 border-b">
+                            <h3 className="font-semibold text-sm text-text-primary px-2">Trocar Usuário (Simulação)</h3>
                         </div>
-                    )}
+                        <div className="py-1">
+                            {users.map(user => (
+                                <a
+                                    key={user.id}
+                                    onClick={() => { onUserChange(user); setIsUserMenuOpen(false); }}
+                                    className={`flex items-center px-4 py-2 text-sm text-text-primary hover:bg-gray-100 cursor-pointer ${currentUser.id === user.id ? 'font-bold bg-gray-100' : ''}`}
+                                >
+                                    <img src={user.avatar} className="h-8 w-8 rounded-full mr-3" />
+                                    <div>
+                                        <p>{user.name}</p>
+                                        <p className="text-xs text-text-secondary">{user.role}</p>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>

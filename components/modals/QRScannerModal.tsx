@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
 interface QRScannerModalProps {
     onClose: () => void;
@@ -24,7 +24,14 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ onClose, onScanS
             {
                 fps: 10,
                 qrbox: { width: 250, height: 250 },
-                supportedScanTypes: [0, 1] // SCAN_TYPE_CAMERA, SCAN_TYPE_FILE
+                supportedScanTypes: [0], // 0 = SCAN_TYPE_CAMERA
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                ],
             },
             false // verbose
         );

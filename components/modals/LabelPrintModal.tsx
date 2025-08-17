@@ -94,6 +94,7 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ asset, onClose
 
                     <div className="p-6 bg-gray-50 printable-area">
                        <div className="bg-white p-4 border border-gray-300 rounded-md w-[350px] mx-auto label-card">
+                            <p className="text-xs text-center font-semibold text-brand-secondary">AssetManager Pro</p>
                             <h3 className="text-lg font-bold text-center truncate" title={asset.name}>{asset.name}</h3>
                             <p className="text-sm text-center text-gray-600 mb-2">{asset.id}</p>
                             <div className="flex justify-between items-center mt-4">

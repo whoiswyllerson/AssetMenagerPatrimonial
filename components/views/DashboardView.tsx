@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Asset } from '../../types';
+import type { Asset, AssetCategory } from '../../types';
 import { Card } from '../shared/Card';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ExclamationTriangleIcon, DashboardIcon, CalculatorIcon, BellIcon, WrenchIcon, ContractIcon } from '../shared/Icons';
@@ -97,11 +97,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
   }, [assets, alerts]);
 
   const categoryData = useMemo(() => {
+    const categoryLabels: Record<AssetCategory, string> = {
+        IT: 'Informática',
+        Furniture: 'Mobiliário',
+        Vehicle: 'Veículos'
+    };
     const counts = assets.reduce((acc, asset) => {
       acc[asset.category] = (acc[asset.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    return Object.entries(counts).map(([name, value]) => ({ name: categoryLabels[name as AssetCategory] ?? name, value }));
   }, [assets]);
 
   const statusData = useMemo(() => {
@@ -126,6 +131,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
 
 
   const COLORS = ['#0052CC', '#4C9AFF', '#091E42', '#5E6C84'];
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+      if (percent < 0.05) { // Don't render label for small slices
+          return null;
+      }
+
+      return (
+          <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize="12px" fontWeight="bold">
+              {`${(percent * 100).toFixed(0)}%`}
+          </text>
+      );
+  };
+
 
   return (
     <div className="space-y-8">
@@ -145,12 +167,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ assets, alerts }) 
           <h2 className="text-lg font-semibold text-brand-secondary mb-4">Ativos por Categoria</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={categoryData} cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+              <Pie 
+                data={categoryData} 
+                cx="50%" 
+                cy="50%" 
+                innerRadius={60} 
+                outerRadius={90} 
+                fill="#8884d8" 
+                dataKey="value" 
+                nameKey="name" 
+                paddingAngle={5}
+                labelLine={false}
+                label={renderCustomizedLabel}
+              >
                 {categoryData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => `${value} ativos`} />
+              <Tooltip formatter={(value, name) => {
+                  const total = categoryData.reduce((acc, entry) => acc + entry.value, 0);
+                  const percent = total > 0 ? (((value as number) / total) * 100).toFixed(1) : 0;
+                  return [`${value} ativos (${percent}%)`, name];
+              }} />
+              <Legend iconSize={10} wrapperStyle={{fontSize: '12px', wordWrap: 'break-word'}}/>
             </PieChart>
           </ResponsiveContainer>
         </Card>

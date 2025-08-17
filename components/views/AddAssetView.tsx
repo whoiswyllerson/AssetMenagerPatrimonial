@@ -1,13 +1,12 @@
-
-
 import React, { useState, useEffect } from 'react';
-import type { Asset, AssetCategory, Contract, Key } from '../../types';
-import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon, AddAssetIcon, KeyIcon } from '../shared/Icons';
+import type { Asset, AssetCategory, Contract, Key, Location, Acquisition } from '../../types';
+import { ITIcon, FurnitureIcon, VehicleIcon, PhotoIcon, DocumentIcon, UploadIcon, AddAssetIcon, KeyIcon, SpinnerIcon } from '../shared/Icons';
 
 interface AddAssetViewProps {
   onAddAsset: (asset: Omit<Asset, 'id' | 'history'>) => void;
   onAddKey: (key: Omit<Key, 'id' | 'history'>) => void;
   preselection: { itemType: 'asset' | 'key'; category?: AssetCategory } | null;
+  onCancel: () => void;
 }
 
 const TypeSelector: React.FC<{ onSelect: (type: 'asset' | 'key') => void; }> = ({ onSelect }) => {
@@ -65,13 +64,14 @@ const CategorySelector: React.FC<{
 };
 
 
-export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey, preselection }) => {
+export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey, preselection, onCancel }) => {
   const [formType, setFormType] = useState<'asset' | 'key' | null>(null);
   const [category, setCategory] = useState<AssetCategory | null>(null);
   const [formData, setFormData] = useState<Partial<Omit<Asset, 'id'>>>({});
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [keyData, setKeyData] = useState({ name: '', description: '', rfid: '' });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (preselection) {
@@ -134,7 +134,8 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!category) return;
+    if (!category || isSaving) return;
+    setIsSaving(true);
     
     const defaultPhotoUrl = category === 'Furniture' ? `https://picsum.photos/seed/${Date.now()}/400/300` : undefined;
 
@@ -157,19 +158,29 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
       contracts,
       photoUrl: formData.photoUrl || defaultPhotoUrl,
       allocationHistory: [],
+      location: {
+        physicalLocation: (formData.location as Location)?.physicalLocation || 'Não especificado',
+        responsible: (formData.location as Location)?.responsible || 'N/A',
+      },
       acquisition: {
-        ...(formData.acquisition as any),
-        value: Number(formData.acquisition?.value) || 0,
-        usefulLifeInYears: formData.acquisition?.usefulLifeInYears ? Number(formData.acquisition.usefulLifeInYears) : undefined,
+        purchaseDate: (formData.acquisition as Acquisition)?.purchaseDate || new Date().toISOString().split('T')[0],
+        value: Number((formData.acquisition as Acquisition)?.value) || 0,
+        invoice: (formData.acquisition as Acquisition)?.invoice || 'N/D',
+        supplier: (formData.acquisition as Acquisition)?.supplier || 'N/D',
+        usefulLifeInYears: (formData.acquisition as Acquisition)?.usefulLifeInYears ? Number((formData.acquisition as Acquisition).usefulLifeInYears) : undefined,
+        depreciationMethod: (formData.acquisition as Acquisition)?.depreciationMethod || undefined,
       },
     } as Omit<Asset, 'id' | 'history'>;
 
-    onAddAsset(completeAssetData);
-    setFormType(null);
-    setCategory(null);
-    setFormData({});
-    setPhotoPreview(null);
-    setDocumentFile(null);
+    setTimeout(() => {
+        onAddAsset(completeAssetData);
+        setIsSaving(false);
+        setFormType(null);
+        setCategory(null);
+        setFormData({});
+        setPhotoPreview(null);
+        setDocumentFile(null);
+    }, 500);
   };
 
   const handleKeyInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,13 +190,18 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
 
   const handleKeySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddKey({
-      ...keyData,
-      status: 'Disponível',
-      location: { storagePoint: 'Claviculário Principal', responsible: 'N/A' },
-    });
-    setFormType(null);
-    setKeyData({ name: '', description: '', rfid: '' });
+    if (isSaving) return;
+    setIsSaving(true);
+    setTimeout(() => {
+        onAddKey({
+            ...keyData,
+            status: 'Disponível',
+            location: { storagePoint: 'Claviculário Principal', responsible: 'N/A' },
+        });
+        setIsSaving(false);
+        setFormType(null);
+        setKeyData({ name: '', description: '', rfid: '' });
+    }, 500);
   };
 
   const getCategorySpecificDefaults = (cat: AssetCategory) => {
@@ -213,8 +229,10 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
         </div>
       </div>
       <div className="flex justify-end space-x-4">
-        <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
-        <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transform transition-transform active:scale-95">Salvar Chave</button>
+        <button type="button" onClick={onCancel} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
+        <button type="submit" disabled={isSaving} className="px-6 py-2 w-36 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transform transition-transform active:scale-95 disabled:bg-gray-400 flex items-center justify-center">
+            {isSaving ? <SpinnerIcon className="w-5 h-5" /> : 'Salvar Chave'}
+        </button>
       </div>
     </form>
   );
@@ -329,8 +347,10 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
         </div>
 
         <div className="flex justify-end space-x-4">
-            <button type="button" onClick={() => setCategory(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
-            <button type="submit" className="px-6 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transform transition-transform active:scale-95">Salvar Ativo</button>
+            <button type="button" onClick={onCancel} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
+            <button type="submit" disabled={isSaving} className="px-6 py-2 w-36 rounded-lg bg-brand-primary text-white hover:bg-brand-accent transform transition-transform active:scale-95 disabled:bg-gray-400 flex items-center justify-center">
+                {isSaving ? <SpinnerIcon className="w-5 h-5" /> : 'Salvar Ativo'}
+            </button>
         </div>
       </form>
     );
@@ -340,7 +360,7 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-brand-secondary">Cadastro de Itens</h1>
       <div className="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto">
-        {formType === null && <TypeSelector onSelect={setFormType} />}
+        {formType === null && !preselection && <TypeSelector onSelect={setFormType} />}
         
         {formType === 'key' && renderKeyForm()}
 
@@ -348,7 +368,7 @@ export const AddAssetView: React.FC<AddAssetViewProps> = ({ onAddAsset, onAddKey
           <div>
             <CategorySelector selectedCategory={category} onSelect={setCategory} />
             <div className="text-center mt-8">
-              <button type="button" onClick={() => setFormType(null)} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
+              <button type="button" onClick={onCancel} className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transform transition-transform active:scale-95">Voltar</button>
             </div>
           </div>
         )}

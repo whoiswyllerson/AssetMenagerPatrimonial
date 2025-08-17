@@ -1,6 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import type { Asset, AssetCategory, User, Key, Toast, ToastType } from './types';
 import { initialAssets, mockKeys, mockUsers } from './data/mockData';
 import { DashboardView } from './components/views/DashboardView';
@@ -32,7 +30,9 @@ const App: React.FC = () => {
   const [isGlobalScannerOpen, setIsGlobalScannerOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [addItemPreselection, setAddItemPreselection] = useState<AddItemPreselection>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [viewBeforeAddItem, setViewBeforeAddItem] = useState<View>('DASHBOARD');
 
 
   const addToast = (message: string, type: ToastType = 'info') => {
@@ -48,7 +48,7 @@ const App: React.FC = () => {
       setAddItemPreselection(null);
     }
     setView(newView);
-    setIsSidebarOpen(false); // Close sidebar on navigation
+    setIsMobileSidebarOpen(false); // Close sidebar on navigation
   };
 
   const handleSetCurrentUser = (user: User) => {
@@ -57,18 +57,44 @@ const App: React.FC = () => {
   };
 
   const handleNavigateToAddItem = (preselection: NonNullable<AddItemPreselection>) => {
+    setViewBeforeAddItem(view);
     setAddItemPreselection(preselection);
     setView('ADD_ITEM');
   };
 
+  const handleCancelAddItem = () => {
+    setView(viewBeforeAddItem);
+    setAddItemPreselection(null);
+  };
+
   const addAsset = (newAsset: Omit<Asset, 'id' | 'history'>) => {
+    const prefixMap: Record<AssetCategory, string> = {
+      IT: 'IT',
+      Furniture: 'FUR',
+      Vehicle: 'VEH',
+    };
+    const prefix = prefixMap[newAsset.category];
+    const categoryAssets = assets.filter(a => a.category === newAsset.category);
+    const maxId = categoryAssets.reduce((max, asset) => {
+      const idNum = asset.id ? parseInt(asset.id.split('-')[1], 10) : 0;
+      if (isNaN(idNum)) return max;
+      return idNum > max ? idNum : max;
+    }, 0);
+    const newIdNumber = maxId + 1;
+    const newId = `${prefix}-${String(newIdNumber).padStart(3, '0')}`;
+
     const assetWithId = {
       ...newAsset,
-      id: `ASSET-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      history: [{ date: new Date().toISOString().split('T')[0], user: currentUser.name, action: 'Ativo criado' }],
+      id: newId,
+      history: [{ 
+        date: new Date().toISOString().split('T')[0], 
+        user: currentUser.name, 
+        action: 'Ativo criado',
+        details: `Ativo alocado para ${newAsset.location.responsible} em ${newAsset.location.physicalLocation}.`
+      }],
     } as Asset;
     setAssets(prevAssets => [...prevAssets, assetWithId]);
-    addToast(`Ativo "${assetWithId.name}" criado com sucesso!`, 'success');
+    addToast(`Ativo "${assetWithId.name}" (${newId}) criado com sucesso!`, 'success');
     setAddItemPreselection(null);
     switch(assetWithId.category) {
       case 'Furniture': setView('FURNITURE'); break;
@@ -86,13 +112,22 @@ const App: React.FC = () => {
   };
 
   const addKey = (newKey: Omit<Key, 'id' | 'history'>) => {
+    const prefix = 'CHV';
+    const maxId = keys.reduce((max, key) => {
+        const idNum = key.id ? parseInt(key.id.split('-')[1], 10) : 0;
+        if(isNaN(idNum)) return max;
+        return idNum > max ? idNum : max;
+    }, 0);
+    const newIdNumber = maxId + 1;
+    const newId = `${prefix}-${String(newIdNumber).padStart(3, '0')}`;
+    
     const keyWithId = { 
       ...newKey, 
-      id: `KEY-${Date.now()}`,
+      id: newId,
       history: [{ date: new Date().toISOString().split('T')[0], user: currentUser.name, action: 'Chave criada', details: `Chave "${newKey.name}" adicionada ao sistema.` }],
     };
     setKeys(prev => [...prev, keyWithId]);
-    addToast(`Chave "${keyWithId.name}" criada com sucesso!`, 'success');
+    addToast(`Chave "${keyWithId.name}" (${newId}) criada com sucesso!`, 'success');
     setAddItemPreselection(null);
     setView('KEY_MANAGEMENT');
   };
@@ -116,7 +151,8 @@ const App: React.FC = () => {
             {
               date: new Date().toISOString().split('T')[0],
               user: currentUser.name,
-              action: 'Ativo auditado no inventário'
+              action: 'Ativo auditado',
+              details: `Ativo verificado no local: ${asset.location.physicalLocation}`
             }
           ]
         };
@@ -209,7 +245,7 @@ const App: React.FC = () => {
       case 'VEHICLES':
         return <AssetListView assets={getAssetsByCategory('Vehicle')} category='Frota de Veículos' onUpdateAsset={updateAsset} onDeleteAsset={deleteAsset} currentUser={currentUser} onShowDetails={setSelectedAssetId} onNavigateToAddItem={() => handleNavigateToAddItem({ itemType: 'asset', category: 'Vehicle' })} />;
       case 'ADD_ITEM':
-        return <AddAssetView onAddAsset={addAsset} onAddKey={addKey} preselection={addItemPreselection} />;
+        return <AddAssetView onAddAsset={addAsset} onAddKey={addKey} preselection={addItemPreselection} onCancel={handleCancelAddItem} />;
       case 'INVENTORY':
         return <InventoryView assets={filteredAssets} onAuditAsset={auditAsset} addToast={addToast} />;
       case 'REPORTS':
@@ -222,50 +258,50 @@ const App: React.FC = () => {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen bg-brand-light font-sans text-text-primary">
-        <ToastContainer toasts={toasts} setToasts={setToasts} />
-        <Sidebar 
-          currentView={view} 
-          setView={handleSetView} 
-          currentUser={currentUser}
-          isOpen={isSidebarOpen}
-          setIsOpen={setIsSidebarOpen}
+    <div className="flex h-screen bg-brand-light font-sans text-text-primary">
+      <ToastContainer toasts={toasts} setToasts={setToasts} />
+      <Sidebar 
+        currentView={view} 
+        setView={handleSetView} 
+        currentUser={currentUser}
+        isMobileOpen={isMobileSidebarOpen}
+        setIsMobileOpen={setIsMobileSidebarOpen}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+      />
+      <div className={`relative flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+        <Header 
+          searchQuery={searchQuery} 
+          setSearchQuery={setSearchQuery} 
+          alerts={alerts} 
+          currentUser={currentUser} 
+          users={mockUsers} 
+          onUserChange={handleSetCurrentUser} 
+          onScanClick={() => setIsGlobalScannerOpen(true)} 
+          addToast={addToast}
+          onMenuClick={() => setIsMobileSidebarOpen(true)}
         />
-        <div className="relative flex-1 flex flex-col overflow-hidden lg:ml-64">
-          <Header 
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
-            alerts={alerts} 
-            currentUser={currentUser} 
-            users={mockUsers} 
-            onUserChange={handleSetCurrentUser} 
-            onScanClick={() => setIsGlobalScannerOpen(true)} 
-            addToast={addToast}
-            onMenuClick={() => setIsSidebarOpen(true)}
-          />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light p-4 md:p-6 lg:p-8">
-            {renderView()}
-          </main>
-        </div>
-        {selectedAsset && (
-          <AssetDetailsModal 
-            asset={selectedAsset} 
-            onClose={() => setSelectedAssetId(null)}
-            onUpdate={updateAsset}
-            onDelete={deleteAsset}
-            currentUser={currentUser}
-            addToast={addToast}
-          />
-        )}
-        {isGlobalScannerOpen && (
-          <QRScannerModal
-            onClose={() => setIsGlobalScannerOpen(false)}
-            onScanSuccess={handleGlobalScanSuccess}
-          />
-        )}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light p-4 md:p-6 lg:p-8">
+          {renderView()}
+        </main>
       </div>
-    </DndProvider>
+      {selectedAsset && (
+        <AssetDetailsModal 
+          asset={selectedAsset} 
+          onClose={() => setSelectedAssetId(null)}
+          onUpdate={updateAsset}
+          onDelete={deleteAsset}
+          currentUser={currentUser}
+          addToast={addToast}
+        />
+      )}
+      {isGlobalScannerOpen && (
+        <QRScannerModal
+          onClose={() => setIsGlobalScannerOpen(false)}
+          onScanSuccess={handleGlobalScanSuccess}
+        />
+      )}
+    </div>
   );
 };
 
